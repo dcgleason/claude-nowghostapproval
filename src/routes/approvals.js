@@ -1,8 +1,25 @@
 const express = require('express');
 const pool = require('../db');
-const { sendDannyApprovedEmail, sendDannyRejectedEmail } = require('../services/email');
+const { sendDannyApprovedEmail, sendDannyRejectedEmail, sendApprovalEmail } = require('../services/email');
+const requireAuth = require('../middleware/requireAuth');
 
 const router = express.Router();
+
+// GET /api/approvals/test-email — debug email sending
+router.get('/test-email', requireAuth, async (req, res) => {
+  const to = req.query.to || process.env.DANNY_EMAIL;
+  try {
+    await sendApprovalEmail({
+      clientEmail: to,
+      clientName: 'Test Client',
+      postContent: 'This is a test post to verify email delivery is working.',
+      approvalToken: 'test-token-123',
+    });
+    res.json({ ok: true, sentTo: to, from: process.env.EMAIL_DOMAIN || 'onboarding@resend.dev' });
+  } catch (err) {
+    res.status(500).json({ error: err.message, detail: err });
+  }
+});
 
 // GET /api/approvals/:token — fetch post + client info for the approval page
 router.get('/:token', async (req, res) => {

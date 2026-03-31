@@ -120,12 +120,18 @@ router.post('/:id/send-approval', async (req, res) => {
     );
     await pool.query('UPDATE posts SET status = $1 WHERE id = $2', ['pending', post.id]);
 
-    await sendApprovalEmail({
-      clientEmail: post.client_email,
-      clientName: post.client_name,
-      postContent: post.content,
-      approvalToken: token,
-    });
+    try {
+      await sendApprovalEmail({
+        clientEmail: post.client_email,
+        clientName: post.client_name,
+        postContent: post.content,
+        approvalToken: token,
+      });
+    } catch (emailErr) {
+      console.error('Email send failed:', emailErr.message, emailErr);
+      // Don't fail the whole request — post is pending, return token so it can be resent
+      return res.json({ ok: true, token, emailWarning: emailErr.message });
+    }
 
     res.json({ ok: true, token });
   } catch (err) {
