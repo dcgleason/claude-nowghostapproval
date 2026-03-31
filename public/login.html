@@ -3,27 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login — LinkedIn Ghostwriter</title>
+  <title>Login — The Now Ghost</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f4f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .login-card { background: #fff; border-radius: 12px; padding: 40px; width: 100%; max-width: 380px; box-shadow: 0 2px 16px rgba(0,0,0,.1); }
-    .login-logo { font-size: 28px; margin-bottom: 4px; }
-    h1 { font-size: 22px; color: #111; margin-bottom: 4px; }
-    p { color: #6b7280; font-size: 14px; margin-bottom: 28px; }
+    .login-card { background: #fff; border-radius: 12px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 2px 16px rgba(0,0,0,.1); }
+    .login-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .login-brand-icon { width: 40px; height: 40px; background: #0a66c2; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .login-brand-name { font-size: 20px; font-weight: 800; color: #0a66c2; letter-spacing: -.3px; line-height: 1.1; }
+    .login-brand-name span { display: block; font-size: 11px; font-weight: 500; color: #6b7280; letter-spacing: .02em; text-transform: uppercase; }
+    h1 { font-size: 22px; font-weight: 700; color: #111; margin-bottom: 4px; }
+    .subtitle { color: #6b7280; font-size: 14px; margin-bottom: 28px; }
     label { display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px; }
     input { width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; transition: border-color .15s; margin-bottom: 16px; }
-    input:focus { border-color: #0a66c2; }
-    button { width: 100%; padding: 12px; background: #0a66c2; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+    input:focus { border-color: #0a66c2; box-shadow: 0 0 0 3px rgba(10,102,194,.1); }
+    button { width: 100%; padding: 12px; background: #0a66c2; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background .15s; }
     button:hover { background: #004182; }
     .error { color: #dc2626; font-size: 14px; margin-top: 12px; display: none; }
+    .divider { border: none; border-top: 1px solid #e5e7eb; margin: 28px 0 0; }
+    .login-footer { text-align: center; margin-top: 16px; font-size: 12px; color: #9ca3af; }
   </style>
 </head>
 <body>
   <div class="login-card">
-    <div class="login-logo">✍️</div>
-    <h1>LinkedIn Ghostwriter</h1>
-    <p>Sign in to your dashboard</p>
+    <div class="login-brand">
+      <div class="login-brand-icon">👻</div>
+      <div class="login-brand-name">
+        The Now Ghost
+        <span>LinkedIn Ghostwriting for the ServiceNow Ecosystem</span>
+      </div>
+    </div>
+    <h1>Sign in to your dashboard</h1>
+    <p class="subtitle">Manage posts, clients, and LinkedIn approvals.</p>
     <form id="loginForm">
       <label for="email">Email</label>
       <input type="email" id="email" autocomplete="email" required>
@@ -32,6 +43,8 @@
       <button type="submit">Sign In</button>
       <div class="error" id="errorMsg"></div>
     </form>
+    <hr class="divider">
+    <p class="login-footer">The Now Ghost &copy; 2025</p>
   </div>
   <script>
     document.getElementById('loginForm').addEventListener('submit', async (e) => {

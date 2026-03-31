@@ -6,7 +6,8 @@ hr { border: none; border-top: 1px solid #e5e7eb; margin: 20px 0; }
 
 /* Navbar */
 .navbar { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
-.nav-brand { font-size: 18px; font-weight: 700; color: #0a66c2; }
+.nav-brand { font-size: 17px; font-weight: 800; color: #0a66c2; letter-spacing: -.2px; display: flex; align-items: center; gap: 7px; }
+.nav-brand-icon { font-size: 18px; }
 .nav-links { display: flex; align-items: center; gap: 8px; }
 .nav-links a { padding: 6px 12px; border-radius: 6px; font-size: 14px; color: #374151; transition: background .15s; }
 .nav-links a:hover, .nav-links a.active { background: #f3f4f6; color: #0a66c2; font-weight: 500; }
