@@ -7,7 +7,7 @@ function getResend() {
   return _resend;
 }
 
-function FROM() { return 'Danny Gleason <onboarding@resend.dev>'; }
+function FROM() { return 'Danny Gleason <noreply@thenowghost.com>'; }
 const DANNY_EMAIL = process.env.DANNY_EMAIL || 'danny.c.gleason@gmail.com';
 
 function truncate(text, max = 300) {
