@@ -7,13 +7,7 @@ function getResend() {
   return _resend;
 }
 
-// Use verified domain if set, otherwise fall back to Resend's default sender
-function FROM() {
-  if (process.env.EMAIL_DOMAIN && process.env.EMAIL_DOMAIN !== 'yourdomain.com') {
-    return 'Danny Gleason <noreply@' + process.env.EMAIL_DOMAIN + '>';
-  }
-  return 'Danny Gleason <onboarding@resend.dev>';
-}
+function FROM() { return 'Danny Gleason <onboarding@resend.dev>'; }
 const DANNY_EMAIL = process.env.DANNY_EMAIL || 'danny.c.gleason@gmail.com';
 
 function truncate(text, max = 300) {
