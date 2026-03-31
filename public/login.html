@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — LinkedIn Ghostwriter</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f4f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-card { background: #fff; border-radius: 12px; padding: 40px; width: 100%; max-width: 380px; box-shadow: 0 2px 16px rgba(0,0,0,.1); }
+    .login-logo { font-size: 28px; margin-bottom: 4px; }
+    h1 { font-size: 22px; color: #111; margin-bottom: 4px; }
+    p { color: #6b7280; font-size: 14px; margin-bottom: 28px; }
+    label { display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+    input { width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; transition: border-color .15s; margin-bottom: 16px; }
+    input:focus { border-color: #0a66c2; }
+    button { width: 100%; padding: 12px; background: #0a66c2; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+    button:hover { background: #004182; }
+    .error { color: #dc2626; font-size: 14px; margin-top: 12px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-logo">✍️</div>
+    <h1>LinkedIn Ghostwriter</h1>
+    <p>Sign in to your dashboard</p>
+    <form id="loginForm">
+      <label for="email">Email</label>
+      <input type="email" id="email" autocomplete="email" required>
+      <label for="password">Password</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+      <button type="submit">Sign In</button>
+      <div class="error" id="errorMsg"></div>
+    </form>
+  </div>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('errorMsg');
+      errEl.style.display = 'none';
+      try {
+        const res = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+          }),
+        });
+        if (res.ok) {
+          window.location.href = '/dashboard/index.html';
+        } else {
+          const data = await res.json();
+          errEl.textContent = data.error || 'Login failed';
+          errEl.style.display = 'block';
+        }
+      } catch {
+        errEl.textContent = 'Network error. Try again.';
+        errEl.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — LinkedIn Ghostwriter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">✍️ Ghostwriter</div>
+    <div class="nav-links">
+      <a href="index.html" class="active">Posts</a>
+      <a href="clients.html">Clients</a>
+      <a href="post-new.html" class="btn btn-primary btn-sm">+ New Post</a>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="page-header">
+      <h1>Posts</h1>
+      <div class="filter-tabs" id="filterTabs">
+        <button class="tab active" data-status="all">All</button>
+        <button class="tab" data-status="draft">Draft</button>
+        <button class="tab" data-status="pending">Pending</button>
+        <button class="tab" data-status="approved">Approved</button>
+        <button class="tab" data-status="rejected">Rejected</button>
+        <button class="tab" data-status="posted">Posted</button>
+      </div>
+    </div>
+
+    <div id="postsList" class="posts-grid">
+      <div class="loading">Loading posts…</div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth();
+    loadPosts();
+
+    document.getElementById('filterTabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('[data-status]');
+      if (!tab) return;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      loadPosts(tab.dataset.status);
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    });
+
+    async function loadPosts(filter = 'all') {
+      const list = document.getElementById('postsList');
+      list.innerHTML = '<div class="loading">Loading…</div>';
+      const posts = await apiFetch('/api/posts');
+      const filtered = filter === 'all' ? posts : posts.filter(p => p.status === filter);
+
+      if (!filtered.length) {
+        list.innerHTML = '<div class="empty-state"><p>No posts yet.</p><a href="post-new.html" class="btn btn-primary">Write First Post</a></div>';
+        return;
+      }
+
+      list.innerHTML = filtered.map(p => `
+        <div class="post-card status-${p.status}">
+          <div class="post-card-header">
+            <span class="client-badge">${escHtml(p.client_name)}</span>
+            <span class="status-badge status-${p.status}">${p.status}</span>
+          </div>
+          <p class="post-preview">${escHtml(p.content.slice(0, 180))}${p.content.length > 180 ? '…' : ''}</p>
+          <div class="post-card-footer">
+            <span class="post-date">${formatDate(p.updated_at)}</span>
+            <div class="post-actions">
+              <a href="post-detail.html?id=${p.id}" class="btn btn-sm btn-ghost">View</a>
+              ${p.status === 'approved' ? `<button class="btn btn-sm btn-success" onclick="publishPost(${p.id})">Post to LinkedIn</button>` : ''}
+              ${['draft', 'rejected'].includes(p.status) ? `<button class="btn btn-sm btn-secondary" onclick="sendApproval(${p.id})">Send for Approval</button>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function sendApproval(postId) {
+      if (!confirm('Send this post for client approval?')) return;
+      await apiFetch(`/api/posts/${postId}/send-approval`, { method: 'POST' });
+      alert('Approval email sent!');
+      loadPosts();
+    }
+
+    async function publishPost(postId) {
+      if (!confirm('Post this to LinkedIn now?')) return;
+      const result = await apiFetch(`/api/posts/${postId}/publish`, { method: 'POST' });
+      alert('Posted to LinkedIn! ✅');
+      loadPosts();
+    }
+  </script>
+</body>
+</html>

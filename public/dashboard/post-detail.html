@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post Detail — LinkedIn Ghostwriter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">✍️ Ghostwriter</div>
+    <div class="nav-links">
+      <a href="index.html">Posts</a>
+      <a href="clients.html">Clients</a>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container container-narrow">
+    <div class="page-header">
+      <a href="index.html" class="back-link">← Back to Posts</a>
+      <div id="headerActions"></div>
+    </div>
+
+    <div id="postDetail" class="loading">Loading…</div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth();
+    const params = new URLSearchParams(location.search);
+    const postId = params.get('id');
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    });
+
+    async function load() {
+      const post = await apiFetch(`/api/posts/${postId}`);
+      const approval = post.latest_approval;
+
+      const tokenExpiry = post.linkedin_token_expires_at ? new Date(post.linkedin_token_expires_at) : null;
+      const daysLeft = tokenExpiry ? Math.ceil((tokenExpiry - Date.now()) / 86400000) : null;
+
+      document.getElementById('headerActions').innerHTML = `
+        ${['draft', 'rejected'].includes(post.status) ? `<a href="post-new.html?edit=${post.id}" class="btn btn-secondary btn-sm">Edit</a>` : ''}
+        ${['draft', 'rejected'].includes(post.status) ? `<button class="btn btn-primary btn-sm" onclick="sendApproval()">Send for Approval</button>` : ''}
+        ${post.status === 'approved' ? `<button class="btn btn-success" onclick="publish()">Post to LinkedIn ↗</button>` : ''}
+      `;
+
+      document.getElementById('postDetail').innerHTML = `
+        <div class="card">
+          <div class="detail-meta">
+            <div><strong>Client:</strong> ${escHtml(post.client_name)} <span class="muted">(${escHtml(post.client_email)})</span></div>
+            <div><strong>Status:</strong> <span class="status-badge status-${post.status}">${post.status}</span></div>
+            ${post.linkedin_person_urn ? `<div><strong>LinkedIn:</strong> <span class="connected">Connected</span>${daysLeft !== null && daysLeft < 7 ? ` <span class="warning">⚠️ Token expires in ${daysLeft}d</span>` : ''}</div>` : `<div><strong>LinkedIn:</strong> <a href="/linkedin/connect?client_id=${post.client_id}" class="btn btn-sm btn-secondary">Connect LinkedIn</a></div>`}
+            ${post.linkedin_post_id ? `<div><strong>LinkedIn Post ID:</strong> <code>${escHtml(post.linkedin_post_id)}</code></div>` : ''}
+          </div>
+          <hr>
+          <div class="post-content">${escHtml(post.content)}</div>
+          ${approval ? `
+          <hr>
+          <div class="approval-info">
+            <h3>Approval</h3>
+            <div><strong>Response:</strong> <span class="status-badge status-${approval.response || 'pending'}">${approval.response || 'Awaiting response'}</span></div>
+            ${approval.client_comment ? `<div class="comment-box"><strong>Client comment:</strong><p>${escHtml(approval.client_comment)}</p></div>` : ''}
+            ${approval.responded_at ? `<div class="muted">Responded ${formatDate(approval.responded_at)}</div>` : ''}
+          </div>` : ''}
+        </div>
+      `;
+    }
+
+    async function sendApproval() {
+      if (!confirm('Send approval email to client?')) return;
+      await apiFetch(`/api/posts/${postId}/send-approval`, { method: 'POST' });
+      alert('Approval email sent!');
+      load();
+    }
+
+    async function publish() {
+      if (!confirm('Post this to LinkedIn now?')) return;
+      await apiFetch(`/api/posts/${postId}/publish`, { method: 'POST' });
+      alert('Posted to LinkedIn! ✅');
+      load();
+    }
+
+    load();
+  </script>
+</body>
+</html>

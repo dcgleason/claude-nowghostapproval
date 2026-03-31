@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Review Your LinkedIn Post</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f4f5; min-height: 100vh; padding: 40px 20px; }
+    .card { background: #fff; border-radius: 16px; max-width: 620px; margin: 0 auto; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.10); }
+    .card-header { background: #0a66c2; padding: 28px 32px; }
+    .card-header h1 { color: #fff; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .card-header p { color: #cce4ff; font-size: 14px; }
+    .card-body { padding: 32px; }
+    .greeting { color: #374151; font-size: 15px; margin-bottom: 20px; }
+    .post-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 24px; margin-bottom: 28px; }
+    .post-box p { color: #1e293b; font-size: 15px; line-height: 1.8; white-space: pre-wrap; }
+    .comment-section { margin-bottom: 24px; }
+    label { display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px; }
+    textarea { width: 100%; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 80px; outline: none; }
+    textarea:focus { border-color: #0a66c2; box-shadow: 0 0 0 3px rgba(10,102,194,.1); }
+    .action-btns { display: flex; gap: 12px; }
+    .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all .15s; }
+    .btn-approve { background: #16a34a; color: #fff; }
+    .btn-approve:hover { background: #15803d; }
+    .btn-reject { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+    .btn-reject:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* States */
+    .state { text-align: center; padding: 20px 0; }
+    .state-icon { font-size: 52px; margin-bottom: 12px; }
+    .state h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .state p { color: #6b7280; font-size: 15px; }
+    .state-approved h2 { color: #15803d; }
+    .state-rejected h2 { color: #dc2626; }
+    .state-expired h2 { color: #d97706; }
+    .loading { color: #9ca3af; text-align: center; padding: 40px; }
+    .error { color: #dc2626; text-align: center; padding: 40px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <h1>LinkedIn Post Review</h1>
+      <p id="headerSubtitle">Review and approve your post</p>
+    </div>
+    <div class="card-body" id="cardBody">
+      <div class="loading">Loading your post…</div>
+    </div>
+  </div>
+
+  <script>
+    const token = location.pathname.split('/').pop();
+
+    async function load() {
+      const res = await fetch(`/api/approvals/${token}`);
+      const body = await res.json();
+
+      if (!res.ok) {
+        renderError(body.error || 'Something went wrong');
+        return;
+      }
+
+      if (body.alreadyResponded) {
+        renderAlreadyResponded(body.response);
+        return;
+      }
+
+      renderReview(body);
+    }
+
+    function renderReview({ content, clientName }) {
+      document.getElementById('cardBody').innerHTML = `
+        <p class="greeting">Hi ${esc(clientName)},</p>
+        <p class="greeting" style="margin-bottom:20px">Here's the LinkedIn post I wrote for you. Please review it and let me know if it looks good or if you'd like any changes.</p>
+        <div class="post-box"><p>${esc(content)}</p></div>
+        <div class="comment-section">
+          <label for="comment">Add a comment (optional)</label>
+          <textarea id="comment" placeholder="Looks great! / Please change the second paragraph…"></textarea>
+        </div>
+        <div class="action-btns">
+          <button class="btn btn-reject" onclick="respond('rejected')">Request Changes</button>
+          <button class="btn btn-approve" onclick="respond('approved')">Approve &amp; Post ✓</button>
+        </div>
+        <div id="responseError" style="color:#dc2626;font-size:14px;margin-top:12px;display:none"></div>
+      `;
+    }
+
+    async function respond(response) {
+      const comment = document.getElementById('comment')?.value.trim();
+      document.querySelectorAll('.btn').forEach(b => b.disabled = true);
+      const errEl = document.getElementById('responseError');
+
+      const res = await fetch(`/api/approvals/${token}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ response, comment }),
+      });
+
+      if (res.ok) {
+        renderAlreadyResponded(response);
+      } else {
+        const data = await res.json();
+        if (errEl) { errEl.textContent = data.error; errEl.style.display = 'block'; }
+        document.querySelectorAll('.btn').forEach(b => b.disabled = false);
+      }
+    }
+
+    function renderAlreadyResponded(response) {
+      const isApproved = response === 'approved';
+      document.getElementById('headerSubtitle').textContent = isApproved ? 'Post approved ✓' : 'Changes requested';
+      document.getElementById('cardBody').innerHTML = `
+        <div class="state ${isApproved ? 'state-approved' : 'state-rejected'}">
+          <div class="state-icon">${isApproved ? '✅' : '💬'}</div>
+          <h2>${isApproved ? 'Post Approved!' : 'Changes Requested'}</h2>
+          <p>${isApproved ? 'Your post has been approved and will be published to LinkedIn.' : "Your feedback has been sent. I'll revise the post and send it back for another review."}</p>
+        </div>
+      `;
+    }
+
+    function renderError(msg) {
+      const isExpired = msg.toLowerCase().includes('expir');
+      document.getElementById('cardBody').innerHTML = `
+        <div class="state state-expired">
+          <div class="state-icon">${isExpired ? '⏰' : '❌'}</div>
+          <h2>${isExpired ? 'Link Expired' : 'Link Not Found'}</h2>
+          <p>${esc(msg)}</p>
+        </div>
+      `;
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    load();
+  </script>
+</body>
+</html>

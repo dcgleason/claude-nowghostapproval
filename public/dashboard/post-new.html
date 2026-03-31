@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Post — LinkedIn Ghostwriter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">✍️ Ghostwriter</div>
+    <div class="nav-links">
+      <a href="index.html">Posts</a>
+      <a href="clients.html">Clients</a>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container container-narrow">
+    <div class="page-header">
+      <a href="index.html" class="back-link">← Back to Posts</a>
+      <h1 id="pageTitle">Write New Post</h1>
+    </div>
+
+    <form id="postForm" class="card">
+      <div class="form-group">
+        <label for="clientSelect">Client</label>
+        <select id="clientSelect" required>
+          <option value="">Select a client…</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="content">Post Content</label>
+        <textarea id="content" rows="12" placeholder="Write the LinkedIn post here…" required></textarea>
+        <div class="char-count"><span id="charCount">0</span> characters</div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" name="action" value="draft" class="btn btn-secondary">Save as Draft</button>
+        <button type="button" id="sendApprovalBtn" class="btn btn-primary" disabled>Save &amp; Send for Approval</button>
+      </div>
+      <div id="formError" class="error-msg" style="display:none"></div>
+    </form>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth();
+
+    const params = new URLSearchParams(location.search);
+    const editId = params.get('edit');
+    let postData = null;
+
+    async function init() {
+      const clients = await apiFetch('/api/clients');
+      const sel = document.getElementById('clientSelect');
+      clients.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      });
+
+      if (editId) {
+        document.getElementById('pageTitle').textContent = 'Edit Post';
+        postData = await apiFetch(`/api/posts/${editId}`);
+        sel.value = postData.client_id;
+        document.getElementById('content').value = postData.content;
+        updateCharCount();
+      }
+    }
+
+    function updateCharCount() {
+      const len = document.getElementById('content').value.length;
+      document.getElementById('charCount').textContent = len;
+    }
+
+    document.getElementById('content').addEventListener('input', updateCharCount);
+    document.getElementById('clientSelect').addEventListener('change', () => {
+      document.getElementById('sendApprovalBtn').disabled = !document.getElementById('clientSelect').value;
+    });
+
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await savePost('draft');
+    });
+
+    document.getElementById('sendApprovalBtn').addEventListener('click', async () => {
+      await savePost('send');
+    });
+
+    async function savePost(action) {
+      const clientId = document.getElementById('clientSelect').value;
+      const content = document.getElementById('content').value.trim();
+      const errEl = document.getElementById('formError');
+      errEl.style.display = 'none';
+
+      if (!clientId || !content) {
+        errEl.textContent = 'Please select a client and write the post content.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      let post;
+      if (editId) {
+        post = await apiFetch(`/api/posts/${editId}`, { method: 'PUT', body: { content } });
+      } else {
+        post = await apiFetch('/api/posts', { method: 'POST', body: { client_id: parseInt(clientId), content } });
+      }
+
+      if (action === 'send') {
+        await apiFetch(`/api/posts/${post.id}/send-approval`, { method: 'POST' });
+        alert('Post saved and approval email sent!');
+      }
+      window.location.href = 'index.html';
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    });
+
+    init();
+  </script>
+</body>
+</html>
