@@ -1,7 +1,13 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = 'Danny Gleason <noreply@' + (process.env.EMAIL_DOMAIN || 'yourdomain.com') + '>';
+// Lazy so missing env var at load time doesn't crash the function
+let _resend;
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
+
+function FROM() { return 'Danny Gleason <noreply@' + (process.env.EMAIL_DOMAIN || 'yourdomain.com') + '>'; }
 const DANNY_EMAIL = process.env.DANNY_EMAIL || 'danny.c.gleason@gmail.com';
 
 function truncate(text, max = 300) {
@@ -12,8 +18,8 @@ async function sendApprovalEmail({ clientEmail, clientName, postContent, approva
   const approvalUrl = `${process.env.APP_URL}/review/${approvalToken}`;
   const preview = truncate(postContent);
 
-  await resend.emails.send({
-    from: FROM,
+  await getResend().emails.send({
+    from: FROM(),
     to: clientEmail,
     subject: 'Your LinkedIn post is ready for review',
     html: `
@@ -44,8 +50,8 @@ async function sendApprovalEmail({ clientEmail, clientName, postContent, approva
 }
 
 async function sendDannyApprovedEmail({ clientName, postId, comment }) {
-  await resend.emails.send({
-    from: FROM,
+  await getResend().emails.send({
+    from: FROM(),
     to: DANNY_EMAIL,
     subject: `✅ ${clientName} approved a post`,
     html: `
@@ -64,8 +70,8 @@ async function sendDannyApprovedEmail({ clientName, postId, comment }) {
 }
 
 async function sendDannyRejectedEmail({ clientName, postId, comment }) {
-  await resend.emails.send({
-    from: FROM,
+  await getResend().emails.send({
+    from: FROM(),
     to: DANNY_EMAIL,
     subject: `❌ ${clientName} requested changes on a post`,
     html: `
@@ -84,8 +90,8 @@ async function sendDannyRejectedEmail({ clientName, postId, comment }) {
 }
 
 async function sendLinkedInExpiryWarning({ clientName, clientEmail, daysLeft }) {
-  await resend.emails.send({
-    from: FROM,
+  await getResend().emails.send({
+    from: FROM(),
     to: DANNY_EMAIL,
     subject: `⚠️ ${clientName}'s LinkedIn token expires in ${daysLeft} days`,
     html: `
