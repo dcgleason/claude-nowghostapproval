@@ -9,13 +9,14 @@ function getResend() {
 
 function FROM() { return 'Danny Gleason <noreply@thenowghost.com>'; }
 const DANNY_EMAIL = process.env.DANNY_EMAIL || 'danny.c.gleason@gmail.com';
+function APP_URL() { return (process.env.APP_URL || '').trim().replace(/\/+$/, ''); }
 
 function truncate(text, max = 300) {
   return text.length > max ? text.slice(0, max) + '…' : text;
 }
 
 async function sendApprovalEmail({ clientEmail, clientName, postContent, approvalToken }) {
-  const approvalUrl = `${process.env.APP_URL}/review/${approvalToken}`;
+  const approvalUrl = `${APP_URL()}/review/${approvalToken}`;
   const preview = truncate(postContent);
 
   await getResend().emails.send({
@@ -62,7 +63,7 @@ async function sendDannyApprovedEmail({ clientName, postId, comment }) {
     <h2 style="color:#16a34a;margin:0 0 16px">Post Approved ✅</h2>
     <p style="color:#374151;font-size:15px"><strong>${clientName}</strong> approved post #${postId}.</p>
     ${comment ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:16px 0"><p style="margin:0;color:#166534;font-size:14px"><strong>Comment:</strong> ${comment}</p></div>` : ''}
-    <a href="${process.env.APP_URL}/dashboard/index.html" style="display:inline-block;margin-top:16px;background:#0a66c2;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">Post to LinkedIn →</a>
+    <a href="${APP_URL()}/dashboard/index.html" style="display:inline-block;margin-top:16px;background:#0a66c2;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">Post to LinkedIn →</a>
   </div>
 </body>
 </html>`,
@@ -82,7 +83,7 @@ async function sendDannyRejectedEmail({ clientName, postId, comment }) {
     <h2 style="color:#dc2626;margin:0 0 16px">Changes Requested ❌</h2>
     <p style="color:#374151;font-size:15px"><strong>${clientName}</strong> requested changes on post #${postId}.</p>
     ${comment ? `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0"><p style="margin:0;color:#991b1b;font-size:14px"><strong>Comment:</strong> ${comment}</p></div>` : ''}
-    <a href="${process.env.APP_URL}/dashboard/index.html" style="display:inline-block;margin-top:16px;background:#0a66c2;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">View Dashboard →</a>
+    <a href="${APP_URL()}/dashboard/index.html" style="display:inline-block;margin-top:16px;background:#0a66c2;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">View Dashboard →</a>
   </div>
 </body>
 </html>`,
@@ -102,7 +103,7 @@ async function sendLinkedInExpiryWarning({ clientName, clientEmail, daysLeft }) 
     <h2 style="color:#d97706;margin:0 0 16px">LinkedIn Token Expiring ⚠️</h2>
     <p style="color:#374151;font-size:15px"><strong>${clientName}</strong> (${clientEmail}) has a LinkedIn token that expires in <strong>${daysLeft} days</strong>.</p>
     <p style="color:#374151;font-size:15px">Ask them to reconnect their LinkedIn account before posting.</p>
-    <a href="${process.env.APP_URL}/dashboard/clients.html" style="display:inline-block;margin-top:16px;background:#0a66c2;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">Manage Clients →</a>
+    <a href="${APP_URL()}/dashboard/clients.html" style="display:inline-block;margin-top:16px;background:#0a66c2;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">Manage Clients →</a>
   </div>
 </body>
 </html>`,
@@ -110,7 +111,7 @@ async function sendLinkedInExpiryWarning({ clientName, clientEmail, daysLeft }) 
 }
 
 async function sendLinkedInAuthEmail({ clientEmail, clientName, inviteToken }) {
-  const authUrl = `${process.env.APP_URL}/linkedin-auth/${inviteToken}`;
+  const authUrl = `${APP_URL()}/linkedin-auth/${inviteToken}`;
   await getResend().emails.send({
     from: FROM(),
     to: clientEmail,
@@ -163,7 +164,7 @@ async function sendDannyLinkedInConnectedEmail({ clientName, clientEmail }) {
     <h2 style="color:#16a34a;margin:0 0 16px">LinkedIn Connected ✅</h2>
     <p style="color:#374151;font-size:15px"><strong>${clientName}</strong> (${clientEmail}) just connected their LinkedIn account via the auth email you sent.</p>
     <p style="color:#374151;font-size:15px">You can now publish posts to their profile.</p>
-    <a href="${process.env.APP_URL}/dashboard/clients.html" style="display:inline-block;margin-top:16px;background:#0a66c2;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">View Clients →</a>
+    <a href="${APP_URL()}/dashboard/clients.html" style="display:inline-block;margin-top:16px;background:#0a66c2;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">View Clients →</a>
   </div>
 </body>
 </html>`,
