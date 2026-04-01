@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Knowledge Base — The Now Ghost</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Client header card */
+    .client-header-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 24px 28px;
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+    .client-header-info { flex: 1; min-width: 200px; }
+    .client-header-name { font-size: 22px; font-weight: 800; color: #111; margin-bottom: 4px; }
+    .client-header-email { font-size: 14px; color: #6b7280; margin-bottom: 8px; }
+    .client-header-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .client-header-actions { display: flex; gap: 8px; align-items: flex-start; flex-shrink: 0; }
+
+    /* KB tabs */
+    .kb-tabs { display: flex; gap: 2px; background: #f3f4f6; padding: 4px; border-radius: 10px; margin-bottom: 0; flex-wrap: wrap; }
+    .kb-tab {
+      padding: 8px 16px;
+      border-radius: 7px;
+      border: none;
+      background: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      color: #6b7280;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .kb-tab.active, .kb-tab:hover {
+      background: #fff;
+      color: #0a66c2;
+      box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    }
+    .kb-tab.active { color: #0a66c2; font-weight: 600; }
+
+    /* KB panel */
+    .kb-panel {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 0 12px 12px 12px;
+      padding: 24px 28px;
+      margin-bottom: 32px;
+    }
+    .kb-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .kb-panel-title { font-size: 15px; font-weight: 700; color: #374151; }
+    .kb-panel-hint { font-size: 12px; color: #9ca3af; }
+    .kb-save-indicator {
+      font-size: 12px;
+      height: 18px;
+      transition: opacity .3s;
+    }
+    .kb-save-indicator.saving { color: #6b7280; }
+    .kb-save-indicator.saved { color: #16a34a; }
+    .kb-save-indicator.error { color: #dc2626; }
+
+    .kb-textarea {
+      width: 100%;
+      min-height: 320px;
+      padding: 14px 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      line-height: 1.7;
+      color: #1e293b;
+      background: #fafafa;
+      resize: vertical;
+      outline: none;
+      transition: border-color .15s, background .15s;
+      box-sizing: border-box;
+    }
+    .kb-textarea:focus {
+      border-color: #0a66c2;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(10,102,194,.08);
+    }
+    .kb-textarea::placeholder { color: #c4c9d0; }
+
+    /* Tab-specific min-heights */
+    .kb-textarea.short { min-height: 180px; }
+
+    /* Recent posts section */
+    .section-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 16px; }
+    .recent-posts-list { display: flex; flex-direction: column; gap: 10px; }
+    .recent-post-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+    .recent-post-preview { flex: 1; font-size: 13px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .recent-post-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .recent-post-date { font-size: 12px; color: #9ca3af; }
+
+    /* New Post CTA banner */
+    .new-post-banner {
+      background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+      border: 1px solid #c7d2fe;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .new-post-banner p { font-size: 14px; color: #3730a3; font-weight: 500; margin: 0; }
+    .new-post-banner span { font-size: 13px; color: #6366f1; font-weight: 400; display: block; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand"><span class="nav-brand-icon">👻</span> The Now Ghost</div>
+    <div class="nav-links">
+      <a href="index.html">Posts</a>
+      <a href="clients.html" class="active">Clients</a>
+      <a href="calendar.html">Calendar</a>
+      <a href="analytics.html">Analytics</a>
+      <a href="intel.html">Intel</a>
+      <a href="prompts.html">Prompts</a>
+      <a href="post-new.html" class="btn btn-primary btn-sm">+ New Post</a>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="page-header" style="margin-bottom:20px">
+      <a href="clients.html" class="back-link">← Back to Clients</a>
+    </div>
+
+    <div id="clientHeader" class="loading">Loading…</div>
+
+    <!-- New post CTA -->
+    <div id="newPostBanner" class="new-post-banner" style="display:none">
+      <div>
+        <p>Ready to write a post?</p>
+        <span>Use the KB below as context in your prompt, then draft directly.</span>
+      </div>
+      <a id="newPostLink" href="post-new.html" class="btn btn-primary btn-sm">+ New Post for this Client</a>
+    </div>
+
+    <!-- Knowledge Base -->
+    <div id="kbSection" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <h2 style="font-size:18px;font-weight:700;color:#111">Knowledge Base</h2>
+        <span style="font-size:12px;color:#9ca3af">Auto-saves as you type</span>
+      </div>
+      <div class="kb-tabs" id="kbTabs">
+        <button class="kb-tab active" data-section="bio">Bio & Background</button>
+        <button class="kb-tab" data-section="talking_points">Talking Points</button>
+        <button class="kb-tab" data-section="approved_examples">Approved Examples</button>
+        <button class="kb-tab" data-section="discovery_notes">Discovery Notes</button>
+        <button class="kb-tab" data-section="ideas">Ideas & Topics</button>
+        <button class="kb-tab" data-section="reference_links">Reference Links</button>
+      </div>
+      <div class="kb-panel">
+        <div class="kb-panel-header">
+          <div>
+            <div class="kb-panel-title" id="kbPanelTitle">Bio & Background</div>
+            <div class="kb-panel-hint" id="kbPanelHint"></div>
+          </div>
+          <div class="kb-save-indicator" id="kbSaveIndicator"></div>
+        </div>
+        <textarea class="kb-textarea" id="kbTextarea" placeholder="Start typing…"></textarea>
+      </div>
+    </div>
+
+    <!-- Recent posts -->
+    <div id="recentPostsSection" style="display:none">
+      <div class="section-title">Recent Posts</div>
+      <div id="recentPostsList" class="recent-posts-list"></div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth();
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    });
+
+    const params = new URLSearchParams(location.search);
+    const clientId = params.get('id');
+    if (!clientId) window.location.href = 'clients.html';
+
+    const SECTIONS = {
+      bio:               { label: 'Bio & Background',    hint: 'Career history, current role, company, ICP, what they do and who they serve.' },
+      talking_points:    { label: 'Talking Points',      hint: 'Key messages they always want to reinforce. Recurring themes. Positions they want to own.' },
+      approved_examples: { label: 'Approved Examples',   hint: 'Posts they loved and approved. Paste examples here as a tone reference.' },
+      discovery_notes:   { label: 'Discovery Notes',     hint: 'Raw notes from onboarding calls, discovery sessions, voice memos, or async messages.' },
+      ideas:             { label: 'Ideas & Topics',      hint: 'Rough post ideas, angles, hooks, articles they shared, things they mentioned in passing.' },
+      reference_links:   { label: 'Reference Links',     hint: 'LinkedIn URL, company website, articles they\'ve written or been featured in, competitor links.' },
+    };
+
+    let currentSection = 'bio';
+    let notesCache = {};
+    let saveTimer = null;
+
+    async function init() {
+      const [client, notes, allPosts] = await Promise.all([
+        apiFetch(`/api/clients/${clientId}`),
+        apiFetch(`/api/clients/${clientId}/notes`),
+        apiFetch('/api/posts'),
+      ]);
+      notesCache = notes;
+
+      // Render header
+      const tokenExpiry = client.linkedin_token_expires_at ? new Date(client.linkedin_token_expires_at) : null;
+      const daysLeft = tokenExpiry ? Math.ceil((tokenExpiry - Date.now()) / 86400000) : null;
+      const connected = !!client.linkedin_person_urn;
+      document.getElementById('clientHeader').outerHTML = `
+        <div class="client-header-card" id="clientHeader">
+          <div class="client-header-info">
+            <div class="client-header-name">${escHtml(client.name)}</div>
+            <div class="client-header-email">${escHtml(client.email)}</div>
+            <div class="client-header-meta">
+              ${connected
+                ? `<span class="connected" style="font-size:13px">✓ LinkedIn connected${daysLeft !== null && daysLeft < 7 ? ` <span class="warning">⚠️ Expires in ${daysLeft}d</span>` : ''}</span>`
+                : `<span style="font-size:13px;color:#9ca3af">LinkedIn not connected</span>`
+              }
+              ${client.voice_tone ? `<span style="background:#eff6ff;color:#1d4ed8;font-size:12px;padding:3px 10px;border-radius:999px">🎙 ${escHtml(client.voice_tone)}</span>` : ''}
+              ${(client.content_pillars || '').split(',').filter(Boolean).map(p => `<span style="background:#f0fdf4;color:#15803d;font-size:11px;padding:2px 8px;border-radius:999px">${escHtml(p.trim())}</span>`).join('')}
+            </div>
+          </div>
+          <div class="client-header-actions">
+            <a href="clients.html" class="btn btn-sm btn-ghost">Edit Profile</a>
+            <a href="analytics.html?client=${clientId}" class="btn btn-sm btn-ghost">Analytics</a>
+          </div>
+        </div>`;
+
+      // New post CTA
+      document.getElementById('newPostLink').href = `post-new.html?client=${clientId}`;
+      document.getElementById('newPostBanner').style.display = 'flex';
+
+      // KB section
+      document.getElementById('kbSection').style.display = 'block';
+      renderSection('bio');
+
+      // Recent posts
+      const clientPosts = allPosts.filter(p => p.client_id === parseInt(clientId)).slice(0, 8);
+      const recentEl = document.getElementById('recentPostsSection');
+      if (clientPosts.length) {
+        recentEl.style.display = 'block';
+        document.getElementById('recentPostsList').innerHTML = clientPosts.map(p => `
+          <div class="recent-post-item">
+            <span class="status-badge status-${p.status}">${p.status}</span>
+            <span class="recent-post-preview">${escHtml(p.content.slice(0, 120))}${p.content.length > 120 ? '…' : ''}</span>
+            <div class="recent-post-meta">
+              <span class="recent-post-date">${formatDate(p.updated_at)}</span>
+              <a href="post-detail.html?id=${p.id}" class="btn btn-sm btn-ghost">View →</a>
+            </div>
+          </div>`).join('');
+      }
+    }
+
+    function renderSection(section) {
+      currentSection = section;
+      const meta = SECTIONS[section];
+      document.querySelectorAll('.kb-tab').forEach(t => t.classList.toggle('active', t.dataset.section === section));
+      document.getElementById('kbPanelTitle').textContent = meta.label;
+      document.getElementById('kbPanelHint').textContent = meta.hint;
+      document.getElementById('kbTextarea').value = notesCache[section]?.content || '';
+      document.getElementById('kbSaveIndicator').textContent = '';
+      document.getElementById('kbSaveIndicator').className = 'kb-save-indicator';
+    }
+
+    document.getElementById('kbTabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('[data-section]');
+      if (!tab || tab.dataset.section === currentSection) return;
+      // Flush any pending save before switching
+      if (saveTimer) { clearTimeout(saveTimer); save(currentSection, document.getElementById('kbTextarea').value); }
+      renderSection(tab.dataset.section);
+    });
+
+    document.getElementById('kbTextarea').addEventListener('input', () => {
+      const indicator = document.getElementById('kbSaveIndicator');
+      indicator.textContent = 'Unsaved…';
+      indicator.className = 'kb-save-indicator saving';
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => save(currentSection, document.getElementById('kbTextarea').value), 1200);
+    });
+
+    async function save(section, content) {
+      const indicator = document.getElementById('kbSaveIndicator');
+      indicator.textContent = 'Saving…';
+      indicator.className = 'kb-save-indicator saving';
+      try {
+        await apiFetch(`/api/clients/${clientId}/notes/${section}`, { method: 'PUT', body: { content } });
+        notesCache[section] = { content, updated_at: new Date().toISOString() };
+        indicator.textContent = 'Saved ✓';
+        indicator.className = 'kb-save-indicator saved';
+      } catch (err) {
+        indicator.textContent = 'Save failed';
+        indicator.className = 'kb-save-indicator error';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

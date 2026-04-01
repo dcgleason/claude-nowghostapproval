@@ -29,6 +29,14 @@ const migrations = [
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
   )`,
+  `CREATE TABLE IF NOT EXISTS client_notes (
+    id SERIAL PRIMARY KEY,
+    client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    section VARCHAR(50) NOT NULL,
+    content TEXT NOT NULL DEFAULT '',
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(client_id, section)
+  )`,
 ];
 (async () => {
   for (const sql of migrations) {

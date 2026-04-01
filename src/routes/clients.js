@@ -119,6 +119,43 @@ router.post('/:id/send-linkedin-auth', async (req, res) => {
   }
 });
 
+// GET /clients/:id/notes
+router.get('/:id/notes', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT section, content, updated_at FROM client_notes WHERE client_id = $1',
+      [req.params.id]
+    );
+    const notes = {};
+    for (const row of rows) notes[row.section] = { content: row.content, updated_at: row.updated_at };
+    res.json(notes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT /clients/:id/notes/:section
+router.put('/:id/notes/:section', async (req, res) => {
+  const VALID = ['bio', 'talking_points', 'approved_examples', 'discovery_notes', 'ideas', 'reference_links'];
+  const { section } = req.params;
+  if (!VALID.includes(section)) return res.status(400).json({ error: 'Invalid section' });
+  const { content = '' } = req.body;
+  try {
+    await pool.query(
+      `INSERT INTO client_notes (client_id, section, content, updated_at)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (client_id, section)
+       DO UPDATE SET content = EXCLUDED.content, updated_at = NOW()`,
+      [req.params.id, section, content]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // DELETE /clients/:id
 router.delete('/:id', async (req, res) => {
   try {
