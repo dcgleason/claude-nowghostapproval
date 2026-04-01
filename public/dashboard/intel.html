@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ad Intel — The Now Ghost</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .intel-hero { margin-bottom: 28px; }
+    .intel-hero h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+    .intel-hero p { color: #6b7280; font-size: 14px; }
+
+    /* Search bar */
+    .search-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .search-bar input[type="text"] { flex: 1; min-width: 220px; padding: 10px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; }
+    .search-bar input:focus { border-color: #0a66c2; box-shadow: 0 0 0 3px rgba(10,102,194,.1); }
+    .search-bar select { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: #fff; cursor: pointer; outline: none; }
+    .search-bar select:focus { border-color: #0a66c2; }
+
+    /* Quick searches */
+    .quick-searches { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .quick-label { font-size: 13px; color: #6b7280; font-weight: 500; white-space: nowrap; }
+    .quick-chip { padding: 5px 12px; border-radius: 999px; border: 1px solid #e5e7eb; background: #fff; font-size: 13px; color: #374151; cursor: pointer; transition: all .15s; white-space: nowrap; }
+    .quick-chip:hover { background: #0a66c2; color: #fff; border-color: #0a66c2; }
+
+    /* Results meta */
+    .results-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; font-size: 13px; color: #6b7280; flex-wrap: wrap; gap: 8px; }
+    .results-meta strong { color: #111; }
+
+    /* Ad cards */
+    .ads-grid { display: flex; flex-direction: column; gap: 14px; }
+    .ad-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px 24px; }
+    .ad-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+    .ad-advertiser { font-size: 14px; font-weight: 700; color: #0a66c2; }
+    .ad-advertiser a { color: inherit; text-decoration: none; }
+    .ad-advertiser a:hover { text-decoration: underline; }
+    .ad-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .ad-type-badge { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; background: #dbeafe; color: #1d4ed8; }
+    .ad-date { font-size: 12px; color: #9ca3af; }
+    .ad-title { font-size: 15px; font-weight: 600; color: #111; margin-bottom: 8px; }
+    .ad-text { font-size: 14px; color: #374151; line-height: 1.7; white-space: pre-wrap; margin-bottom: 14px; }
+    .ad-text.collapsed { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .ad-card-footer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ad-cta-badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; background: #f3f4f6; color: #374151; }
+    .copy-btn { margin-left: auto; padding: 6px 14px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; font-size: 13px; font-weight: 500; cursor: pointer; color: #374151; transition: all .15s; display: flex; align-items: center; gap: 5px; }
+    .copy-btn:hover { background: #0a66c2; color: #fff; border-color: #0a66c2; }
+    .copy-btn.copied { background: #16a34a; color: #fff; border-color: #16a34a; }
+    .expand-btn { font-size: 12px; color: #0a66c2; background: none; border: none; cursor: pointer; padding: 0; margin-top: -8px; margin-bottom: 10px; }
+
+    /* Pagination */
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 24px; }
+    .pagination button { padding: 8px 18px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; font-size: 14px; cursor: pointer; transition: all .15s; }
+    .pagination button:hover:not(:disabled) { background: #0a66c2; color: #fff; border-color: #0a66c2; }
+    .pagination button:disabled { opacity: .4; cursor: not-allowed; }
+    .pagination .page-info { font-size: 14px; color: #6b7280; }
+
+    /* States */
+    .intel-empty { text-align: center; padding: 60px 20px; color: #9ca3af; }
+    .intel-empty .icon { font-size: 40px; margin-bottom: 12px; }
+    .intel-hint { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px 18px; font-size: 13px; color: #1e40af; margin-bottom: 20px; line-height: 1.6; }
+    .error-banner { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; font-size: 13px; color: #991b1b; margin-bottom: 20px; }
+    .error-banner code { background: #fee2e2; padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+
+    .no-text { font-style: italic; color: #9ca3af; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand"><span class="nav-brand-icon">👻</span> The Now Ghost</div>
+    <div class="nav-links">
+      <a href="index.html">Posts</a>
+      <a href="clients.html">Clients</a>
+      <a href="analytics.html">Analytics</a>
+      <a href="intel.html" class="active">Intel</a>
+      <a href="post-new.html" class="btn btn-primary btn-sm">+ New Post</a>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="intel-hero">
+      <h1>Competitive Ad Intelligence</h1>
+      <p>Search LinkedIn sponsored content from any company — use it to understand what's resonating in your clients' space.</p>
+    </div>
+
+    <form id="searchForm" autocomplete="off">
+      <div class="search-bar">
+        <input type="text" id="keywordInput" placeholder="Search keywords (e.g. ServiceNow, ITSM, GRC…)" />
+        <select id="countrySelect">
+          <option value="US">🇺🇸 US</option>
+          <option value="GB">🇬🇧 UK</option>
+          <option value="CA">🇨🇦 Canada</option>
+          <option value="AU">🇦🇺 Australia</option>
+          <option value="DE">🇩🇪 Germany</option>
+          <option value="SG">🇸🇬 Singapore</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </div>
+    </form>
+
+    <div class="quick-searches">
+      <span class="quick-label">Quick:</span>
+      <button class="quick-chip" data-q="ServiceNow">ServiceNow</button>
+      <button class="quick-chip" data-q="ITSM automation">ITSM automation</button>
+      <button class="quick-chip" data-q="GRC compliance">GRC compliance</button>
+      <button class="quick-chip" data-q="IT service management">IT service management</button>
+      <button class="quick-chip" data-q="CMDB asset management">CMDB</button>
+      <button class="quick-chip" data-q="AI for IT operations">AI for IT</button>
+      <button class="quick-chip" data-q="digital transformation">Digital transformation</button>
+    </div>
+
+    <div id="resultsArea">
+      <div class="intel-empty">
+        <div class="icon">🔍</div>
+        <p>Search for a keyword to see LinkedIn sponsored content from companies in that space.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth();
+
+    let currentQuery = '';
+    let currentStart = 0;
+    let currentTotal = 0;
+    const PAGE_SIZE = 10;
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    });
+
+    document.getElementById('searchForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const q = document.getElementById('keywordInput').value.trim();
+      if (!q) return;
+      currentQuery = q;
+      currentStart = 0;
+      runSearch();
+    });
+
+    document.querySelectorAll('.quick-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const q = chip.dataset.q;
+        document.getElementById('keywordInput').value = q;
+        currentQuery = q;
+        currentStart = 0;
+        runSearch();
+      });
+    });
+
+    async function runSearch() {
+      const area = document.getElementById('resultsArea');
+      area.innerHTML = '<div class="loading">Searching LinkedIn Ad Library…</div>';
+
+      const country = document.getElementById('countrySelect').value;
+      const url = `/api/adlibrary/search?q=${encodeURIComponent(currentQuery)}&count=${PAGE_SIZE}&start=${currentStart}&country=${country}`;
+
+      try {
+        const res = await fetch(url, { credentials: 'include' });
+        const data = await res.json();
+
+        if (!res.ok) {
+          area.innerHTML = renderError(data);
+          return;
+        }
+
+        currentTotal = data.paging?.total || data.ads.length;
+        renderResults(data.ads, data.paging);
+      } catch (err) {
+        area.innerHTML = `<div class="error-banner">Network error: ${escHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderResults(ads, paging) {
+      const area = document.getElementById('resultsArea');
+
+      if (!ads.length) {
+        area.innerHTML = `
+          <div class="intel-empty">
+            <div class="icon">📭</div>
+            <p>No sponsored ads found for "<strong>${escHtml(currentQuery)}</strong>". Try broader keywords.</p>
+          </div>`;
+        return;
+      }
+
+      const totalShown = Math.min(currentStart + ads.length, paging?.total || ads.length);
+      const total = paging?.total || ads.length;
+      const hasPrev = currentStart > 0;
+      const hasNext = currentStart + PAGE_SIZE < total;
+
+      area.innerHTML = `
+        <div class="intel-hint">
+          💡 These are <strong>paid sponsored posts</strong> — use them to understand competitor messaging, spot trending topics, and inform your clients' organic content strategy.
+        </div>
+        <div class="results-meta">
+          <span>Showing <strong>${currentStart + 1}–${totalShown}</strong>${total > ads.length ? ` of ~${total}` : ''} results for <strong>"${escHtml(currentQuery)}"</strong></span>
+        </div>
+        <div class="ads-grid" id="adsGrid"></div>
+        ${(hasPrev || hasNext) ? `
+          <div class="pagination">
+            <button id="prevBtn" ${hasPrev ? '' : 'disabled'}>← Previous</button>
+            <span class="page-info">Page ${Math.floor(currentStart / PAGE_SIZE) + 1}</span>
+            <button id="nextBtn" ${hasNext ? '' : 'disabled'}>Next →</button>
+          </div>
+        ` : ''}
+      `;
+
+      const grid = document.getElementById('adsGrid');
+      grid.innerHTML = ads.map((ad, i) => renderAdCard(ad, i)).join('');
+
+      // Copy buttons
+      grid.querySelectorAll('.copy-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const text = btn.dataset.text;
+          navigator.clipboard.writeText(text).then(() => {
+            btn.textContent = '✓ Copied';
+            btn.classList.add('copied');
+            setTimeout(() => {
+              btn.textContent = '⎘ Copy text';
+              btn.classList.remove('copied');
+            }, 2000);
+          });
+        });
+      });
+
+      // Expand buttons
+      grid.querySelectorAll('.expand-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const textEl = document.getElementById(btn.dataset.target);
+          textEl.classList.toggle('collapsed');
+          btn.textContent = textEl.classList.contains('collapsed') ? 'Show more' : 'Show less';
+        });
+      });
+
+      // Pagination
+      document.getElementById('prevBtn')?.addEventListener('click', () => {
+        currentStart = Math.max(0, currentStart - PAGE_SIZE);
+        runSearch();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      document.getElementById('nextBtn')?.addEventListener('click', () => {
+        currentStart += PAGE_SIZE;
+        runSearch();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    function renderAdCard(ad, idx) {
+      const textId = `adtext-${idx}`;
+      const isLong = ad.text && ad.text.length > 300;
+      const noText = !ad.text;
+
+      return `
+        <div class="ad-card">
+          <div class="ad-card-header">
+            <div class="ad-advertiser">
+              ${ad.advertiserUrl
+                ? `<a href="${escHtml(ad.advertiserUrl)}" target="_blank" rel="noopener">${escHtml(ad.advertiserName)}</a>`
+                : escHtml(ad.advertiserName)}
+            </div>
+            <div class="ad-meta">
+              <span class="ad-type-badge">${formatAdType(ad.adType)}</span>
+              ${ad.startDate ? `<span class="ad-date">${escHtml(ad.startDate)} → ${escHtml(ad.endDate || 'active')}</span>` : ''}
+            </div>
+          </div>
+          ${ad.title ? `<div class="ad-title">${escHtml(ad.title)}</div>` : ''}
+          ${noText
+            ? `<p class="no-text">No ad copy text available for this creative.</p>`
+            : `<div class="ad-text ${isLong ? 'collapsed' : ''}" id="${textId}">${escHtml(ad.text)}</div>
+               ${isLong ? `<button class="expand-btn" data-target="${textId}">Show more</button>` : ''}`
+          }
+          <div class="ad-card-footer">
+            ${ad.callToAction ? `<span class="ad-cta-badge">${formatCta(ad.callToAction)}</span>` : ''}
+            ${!noText ? `<button class="copy-btn" data-text="${escAttr(ad.text)}">⎘ Copy text</button>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderError(data) {
+      const msg = data.error || 'Unknown error';
+      const isPortalError = msg.includes('Ad Library API');
+      return `
+        <div class="error-banner">
+          <strong>LinkedIn API Error:</strong> ${escHtml(msg)}
+          ${isPortalError ? `
+            <br><br>
+            To enable this feature:
+            <ol style="margin-top:8px;padding-left:20px;line-height:1.8">
+              <li>Go to <a href="https://developer.linkedin.com" target="_blank" style="color:#991b1b">developer.linkedin.com</a> → your app → <strong>Products</strong></li>
+              <li>Find <strong>"Ad Library API"</strong> and click <strong>Request access</strong></li>
+              <li>Once approved, restart the server and try again</li>
+            </ol>
+          ` : ''}
+        </div>`;
+    }
+
+    function formatAdType(type) {
+      const map = {
+        SPONSORED_CONTENT: 'Sponsored Post',
+        TEXT_AD: 'Text Ad',
+        SPONSORED_INMAILS: 'Message Ad',
+        DYNAMIC_AD: 'Dynamic Ad',
+        VIDEO_AD: 'Video Ad',
+        CAROUSEL_AD: 'Carousel',
+      };
+      return map[type] || (type || 'Ad').replace(/_/g, ' ');
+    }
+
+    function formatCta(cta) {
+      return cta.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function escAttr(str) {
+      return (str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>
