@@ -1,6 +1,8 @@
 const express = require('express');
+const { v4: uuidv4 } = require('uuid');
 const pool = require('../db');
 const requireAuth = require('../middleware/requireAuth');
+const { sendLinkedInAuthEmail } = require('../services/email');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -64,6 +66,45 @@ router.put('/:id', async (req, res) => {
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /clients/:id/send-linkedin-auth — send client a remote auth invite email
+router.post('/:id/send-linkedin-auth', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, name, email, linkedin_person_urn FROM clients WHERE id = $1',
+      [req.params.id]
+    );
+    const client = rows[0];
+    if (!client) return res.status(404).json({ error: 'Client not found' });
+    if (client.linkedin_person_urn) {
+      return res.status(400).json({ error: 'Client LinkedIn is already connected' });
+    }
+
+    const token = uuidv4();
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
+
+    await pool.query(
+      'INSERT INTO linkedin_auth_invitations (client_id, token, expires_at) VALUES ($1, $2, $3)',
+      [client.id, token, expiresAt]
+    );
+
+    try {
+      await sendLinkedInAuthEmail({
+        clientEmail: client.email,
+        clientName: client.name,
+        inviteToken: token,
+      });
+    } catch (emailErr) {
+      console.error('LinkedIn auth email failed:', emailErr.message);
+      return res.json({ ok: true, token, emailWarning: emailErr.message });
+    }
+
+    res.json({ ok: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

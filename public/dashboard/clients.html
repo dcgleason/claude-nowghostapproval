@@ -96,7 +96,8 @@
                 ? `<span class="connected">✓ LinkedIn connected</span>
                    ${daysLeft !== null && daysLeft < 7 ? `<span class="warning"> ⚠️ Expires in ${daysLeft}d</span>` : ''}
                    <button class="btn btn-sm btn-ghost" onclick="disconnect(${c.id})">Disconnect</button>`
-                : `<a href="/linkedin/connect?client_id=${c.id}" class="btn btn-sm btn-secondary">Connect LinkedIn</a>`
+                : `<a href="/linkedin/connect?client_id=${c.id}" class="btn btn-sm btn-secondary" title="Connect while you're on their machine">Connect LinkedIn</a>
+                   <button class="btn btn-sm btn-ghost" onclick="sendAuthEmail(${c.id}, '${escHtml(c.name)}')" title="Send client a link to connect remotely">✉️ Send Auth Email</button>`
               }
             </div>
             <div class="client-actions">
@@ -154,6 +155,24 @@
       if (!confirm('Disconnect this client\'s LinkedIn account?')) return;
       await apiFetch(`/linkedin/disconnect/${id}`, { method: 'POST' });
       loadClients();
+    }
+
+    async function sendAuthEmail(id, name) {
+      if (!confirm(`Send ${name} an email with a link to connect their LinkedIn account?`)) return;
+      const statusEl = document.getElementById('statusMsg');
+      try {
+        const result = await apiFetch(`/api/clients/${id}/send-linkedin-auth`, { method: 'POST' });
+        statusEl.textContent = `✅ Auth email sent to ${name}! The link expires in 48 hours.`;
+        statusEl.className = 'status-msg success';
+        if (result.emailWarning) {
+          statusEl.textContent += ` (Warning: ${result.emailWarning})`;
+        }
+      } catch (err) {
+        statusEl.textContent = `❌ Failed to send auth email: ${err.message || 'Server error'}`;
+        statusEl.className = 'status-msg error';
+      }
+      statusEl.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     loadClients();

@@ -2,8 +2,21 @@ require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const pool = require('./db');
 
 const app = express();
+
+// Auto-migrate: create linkedin_auth_invitations if it doesn't exist
+pool.query(`
+  CREATE TABLE IF NOT EXISTS linkedin_auth_invitations (
+    id SERIAL PRIMARY KEY,
+    client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+    token TEXT UNIQUE NOT NULL,
+    used_at TIMESTAMPTZ,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )
+`).catch((err) => console.error('Migration error (linkedin_auth_invitations):', err));
 
 app.use(express.json());
 app.use(cookieParser());
@@ -21,6 +34,7 @@ app.use('/api/approvals', require('./routes/approvals'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/adlibrary', require('./routes/adlibrary'));
 app.use('/linkedin', require('./routes/linkedin'));
+app.use('/linkedin-auth', require('./routes/linkedinAuthPages'));
 
 // Public approval page (token-based, no auth)
 app.get('/review/:token', (req, res) => {
