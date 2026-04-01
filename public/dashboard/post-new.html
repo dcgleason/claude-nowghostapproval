@@ -11,6 +11,7 @@
     <div class="nav-brand"><span class="nav-brand-icon">👻</span> The Now Ghost</div>
     <div class="nav-links">
       <a href="index.html">Posts</a>
+      <a href="ideas.html">Ideas</a>
       <a href="clients.html">Clients</a>
       <a href="calendar.html">Calendar</a>
       <a href="analytics.html">Analytics</a>
@@ -70,7 +71,27 @@
         sel.value = postData.client_id;
         document.getElementById('content').value = postData.content;
         updateCharCount();
+        return;
       }
+
+      // Pre-select client from URL param (e.g. coming from client-detail or ideas page)
+      const clientParam = params.get('client');
+      if (clientParam) sel.value = clientParam;
+
+      // Pre-fill content if coming from "Draft It" on the ideas page
+      const stored = sessionStorage.getItem('draftIdea');
+      if (stored) {
+        sessionStorage.removeItem('draftIdea');
+        try {
+          const idea = JSON.parse(stored);
+          if (idea.client_id) sel.value = idea.client_id;
+          const draft = [idea.title, idea.notes].filter(Boolean).join('\n\n');
+          document.getElementById('content').value = draft;
+          updateCharCount();
+        } catch {}
+      }
+
+      document.getElementById('sendApprovalBtn').disabled = !sel.value;
     }
 
     function updateCharCount() {

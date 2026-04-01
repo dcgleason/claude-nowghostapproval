@@ -37,6 +37,26 @@ const migrations = [
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(client_id, section)
   )`,
+  `CREATE TABLE IF NOT EXISTS ideas (
+    id SERIAL PRIMARY KEY,
+    client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    notes TEXT,
+    content_pillar TEXT,
+    source TEXT,
+    status TEXT NOT NULL DEFAULT 'idea',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS client_transcripts (
+    id SERIAL PRIMARY KEY,
+    client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    session_date DATE NOT NULL,
+    title TEXT,
+    content TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`,
 ];
 (async () => {
   for (const sql of migrations) {
@@ -60,6 +80,7 @@ app.use('/api/approvals', require('./routes/approvals'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/adlibrary', require('./routes/adlibrary'));
 app.use('/api/prompts', require('./routes/prompts'));
+app.use('/api/ideas', require('./routes/ideas'));
 app.use('/linkedin', require('./routes/linkedin'));
 app.use('/linkedin-auth', require('./routes/linkedinAuthPages'));
 

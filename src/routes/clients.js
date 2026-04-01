@@ -156,6 +156,66 @@ router.put('/:id/notes/:section', async (req, res) => {
   }
 });
 
+// GET /clients/:id/transcripts
+router.get('/:id/transcripts', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM client_transcripts WHERE client_id = $1 ORDER BY session_date DESC',
+      [req.params.id]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /clients/:id/transcripts
+router.post('/:id/transcripts', async (req, res) => {
+  const { session_date, title, content } = req.body;
+  if (!session_date || !content) return res.status(400).json({ error: 'Date and content required' });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO client_transcripts (client_id, session_date, title, content)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [req.params.id, session_date, title || null, content]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT /clients/:id/transcripts/:tid
+router.put('/:id/transcripts/:tid', async (req, res) => {
+  const { session_date, title, content } = req.body;
+  if (!session_date || !content) return res.status(400).json({ error: 'Date and content required' });
+  try {
+    const { rows } = await pool.query(
+      `UPDATE client_transcripts SET session_date = $1, title = $2, content = $3, updated_at = NOW()
+       WHERE id = $4 AND client_id = $5 RETURNING *`,
+      [session_date, title || null, content, req.params.tid, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// DELETE /clients/:id/transcripts/:tid
+router.delete('/:id/transcripts/:tid', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM client_transcripts WHERE id = $1 AND client_id = $2', [req.params.tid, req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // DELETE /clients/:id
 router.delete('/:id', async (req, res) => {
   try {

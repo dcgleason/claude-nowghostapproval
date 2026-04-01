@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ideas — The Now Ghost</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Quick capture */
+    .capture-card {
+      background: #fff;
+      border: 2px solid #0a66c2;
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin-bottom: 28px;
+      box-shadow: 0 4px 20px rgba(10,102,194,.08);
+    }
+    .capture-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #0a66c2;
+      margin-bottom: 10px;
+    }
+    .capture-main-input {
+      width: 100%;
+      font-size: 17px;
+      font-weight: 500;
+      border: none;
+      outline: none;
+      color: #111;
+      background: transparent;
+      padding: 0;
+      margin-bottom: 12px;
+      font-family: inherit;
+    }
+    .capture-main-input::placeholder { color: #c4c9d0; font-weight: 400; }
+    .capture-meta-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .capture-meta-row select,
+    .capture-meta-row input[type="text"] {
+      padding: 7px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 13px;
+      background: #f9fafb;
+      outline: none;
+      font-family: inherit;
+      width: auto;
+    }
+    .capture-meta-row select { cursor: pointer; }
+    .capture-meta-row select:focus,
+    .capture-meta-row input[type="text"]:focus { border-color: #0a66c2; background: #fff; }
+    .capture-meta-row .capture-pillar { flex: 1; min-width: 160px; max-width: 260px; }
+    .capture-hint {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    /* Filters */
+    .ideas-filters {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .ideas-filters .filter-tabs { flex: 1; }
+    .ideas-client-filter {
+      padding: 7px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 13px;
+      background: #fff;
+      cursor: pointer;
+      outline: none;
+      font-family: inherit;
+    }
+    .ideas-count {
+      font-size: 13px;
+      color: #9ca3af;
+      white-space: nowrap;
+    }
+
+    /* Idea cards */
+    .ideas-list { display: flex; flex-direction: column; gap: 10px; }
+    .idea-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      transition: box-shadow .15s;
+    }
+    .idea-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+    .idea-card-body { flex: 1; min-width: 0; }
+    .idea-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 5px;
+      line-height: 1.4;
+    }
+    .idea-chips {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .idea-client-chip {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    .idea-no-client {
+      font-size: 11px;
+      color: #d1d5db;
+      padding: 2px 8px;
+    }
+    .idea-pillar-chip {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #f0fdf4;
+      color: #15803d;
+    }
+    .idea-date { font-size: 11px; color: #d1d5db; }
+    .idea-notes {
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.6;
+      margin-top: 4px;
+    }
+    .idea-notes.clamped {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .idea-notes-toggle {
+      font-size: 12px;
+      color: #0a66c2;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 0;
+      display: block;
+    }
+
+    /* Right side: status + actions */
+    .idea-card-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .status-switcher {
+      display: flex;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .status-switcher button {
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      border: none;
+      border-right: 1px solid #e5e7eb;
+      background: #f9fafb;
+      color: #9ca3af;
+      cursor: pointer;
+      transition: all .12s;
+      white-space: nowrap;
+    }
+    .status-switcher button:last-child { border-right: none; }
+    .status-switcher button:hover { background: #f3f4f6; color: #374151; }
+    .status-switcher button.active-idea { background: #f3f4f6; color: #374151; font-weight: 600; }
+    .status-switcher button.active-in_progress { background: #fef9c3; color: #854d0e; font-weight: 600; }
+    .status-switcher button.active-drafted { background: #e0e7ff; color: #3730a3; font-weight: 600; }
+
+    .idea-actions { display: flex; gap: 6px; align-items: center; }
+
+    /* Edit modal */
+    .notes-field { min-height: 100px; }
+
+    /* Empty */
+    .ideas-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #9ca3af;
+    }
+    .ideas-empty p { font-size: 15px; margin-bottom: 6px; }
+    .ideas-empty small { font-size: 13px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand"><span class="nav-brand-icon">👻</span> The Now Ghost</div>
+    <div class="nav-links">
+      <a href="index.html">Posts</a>
+      <a href="ideas.html" class="active">Ideas</a>
+      <a href="clients.html">Clients</a>
+      <a href="calendar.html">Calendar</a>
+      <a href="analytics.html">Analytics</a>
+      <a href="intel.html">Intel</a>
+      <a href="prompts.html">Prompts</a>
+      <a href="post-new.html" class="btn btn-primary btn-sm">+ New Post</a>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container">
+
+    <!-- Quick capture -->
+    <div class="capture-card">
+      <div class="capture-label">💡 Quick Capture</div>
+      <input
+        type="text"
+        class="capture-main-input"
+        id="ideaInput"
+        placeholder="What's the idea? Press Enter to save…"
+        autocomplete="off"
+      >
+      <div class="capture-meta-row">
+        <select id="captureClient">
+          <option value="">No client / general</option>
+        </select>
+        <input type="text" class="capture-pillar" id="capturePillar" placeholder="Content pillar (optional)">
+        <button class="btn btn-primary btn-sm" id="addIdeaBtn">Add Idea</button>
+        <span class="capture-hint">or press Enter ↵</span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="ideas-filters">
+      <div class="filter-tabs" id="statusTabs">
+        <button class="tab active" data-status="all">All</button>
+        <button class="tab" data-status="idea">Ideas</button>
+        <button class="tab" data-status="in_progress">Working</button>
+        <button class="tab" data-status="drafted">Drafted</button>
+      </div>
+      <select class="ideas-client-filter" id="filterClient">
+        <option value="">All clients</option>
+      </select>
+      <span class="ideas-count" id="ideasCount"></span>
+    </div>
+
+    <!-- List -->
+    <div id="ideasList"></div>
+  </main>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:520px">
+      <h2 id="editModalTitle">Edit Idea</h2>
+      <form id="editForm">
+        <input type="hidden" id="editId">
+        <div class="form-group">
+          <label for="editTitle">Idea / Hook</label>
+          <input type="text" id="editTitle" required placeholder="The one-liner hook or angle">
+        </div>
+        <div class="form-group">
+          <label for="editNotes">Notes</label>
+          <textarea id="editNotes" class="notes-field" rows="4" placeholder="Rough thoughts, context, angle, source link…"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="editClient">Client</label>
+          <select id="editClient">
+            <option value="">No client / general</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editPillar">Content Pillar</label>
+          <input type="text" id="editPillar" placeholder="e.g. ServiceNow GRC, Thought Leadership">
+        </div>
+        <div class="form-group">
+          <label for="editSource">Source / Context</label>
+          <input type="text" id="editSource" placeholder="e.g. Call on Jan 10, LinkedIn article they shared">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth();
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    });
+
+    let allIdeas = [];
+    let clients = [];
+    let currentStatus = 'all';
+    let currentClientFilter = '';
+
+    async function init() {
+      [allIdeas, clients] = await Promise.all([
+        apiFetch('/api/ideas'),
+        apiFetch('/api/clients'),
+      ]);
+      populateClientSelects();
+      render();
+    }
+
+    function populateClientSelects() {
+      ['captureClient', 'filterClient', 'editClient'].forEach(id => {
+        const sel = document.getElementById(id);
+        // Keep first option, remove any old ones
+        while (sel.options.length > 1) sel.remove(1);
+        clients.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name;
+          sel.appendChild(opt);
+        });
+      });
+    }
+
+    // Status filter tabs
+    document.getElementById('statusTabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('[data-status]');
+      if (!tab) return;
+      currentStatus = tab.dataset.status;
+      document.querySelectorAll('#statusTabs .tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      render();
+    });
+
+    document.getElementById('filterClient').addEventListener('change', (e) => {
+      currentClientFilter = e.target.value;
+      render();
+    });
+
+    function render() {
+      let filtered = allIdeas;
+      if (currentStatus !== 'all') filtered = filtered.filter(i => i.status === currentStatus);
+      if (currentClientFilter) filtered = filtered.filter(i => String(i.client_id) === currentClientFilter);
+
+      document.getElementById('ideasCount').textContent = `${filtered.length} idea${filtered.length !== 1 ? 's' : ''}`;
+
+      const list = document.getElementById('ideasList');
+      if (!filtered.length) {
+        list.innerHTML = `<div class="ideas-empty">
+          <p>${currentStatus === 'all' && !currentClientFilter ? '💡 No ideas yet.' : 'No ideas match this filter.'}</p>
+          <small>${currentStatus === 'all' && !currentClientFilter ? 'Type one above and press Enter.' : ''}</small>
+        </div>`;
+        return;
+      }
+
+      list.innerHTML = `<div class="ideas-list">${filtered.map(renderCard).join('')}</div>`;
+
+      // Wire expand toggles
+      list.querySelectorAll('.idea-notes-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const notesEl = btn.previousElementSibling;
+          const expanded = !notesEl.classList.contains('clamped');
+          notesEl.classList.toggle('clamped', expanded);
+          btn.textContent = expanded ? 'Show more' : 'Show less';
+        });
+      });
+    }
+
+    function renderCard(idea) {
+      const isLong = (idea.notes || '').length > 120;
+      return `
+        <div class="idea-card">
+          <div class="idea-card-body">
+            <div class="idea-title">${escHtml(idea.title)}</div>
+            <div class="idea-chips">
+              ${idea.client_name
+                ? `<span class="idea-client-chip">${escHtml(idea.client_name)}</span>`
+                : `<span class="idea-no-client">No client</span>`}
+              ${idea.content_pillar ? `<span class="idea-pillar-chip">${escHtml(idea.content_pillar)}</span>` : ''}
+              <span class="idea-date">${formatDate(idea.created_at)}</span>
+            </div>
+            ${idea.notes ? `
+              <div class="idea-notes${isLong ? ' clamped' : ''}">${escHtml(idea.notes)}</div>
+              ${isLong ? `<button class="idea-notes-toggle">Show more</button>` : ''}
+            ` : ''}
+          </div>
+          <div class="idea-card-right">
+            <div class="status-switcher">
+              <button class="${idea.status === 'idea' ? 'active-idea' : ''}" onclick="setStatus(${idea.id}, 'idea')">Idea</button>
+              <button class="${idea.status === 'in_progress' ? 'active-in_progress' : ''}" onclick="setStatus(${idea.id}, 'in_progress')">Working</button>
+              <button class="${idea.status === 'drafted' ? 'active-drafted' : ''}" onclick="setStatus(${idea.id}, 'drafted')">Drafted</button>
+            </div>
+            <div class="idea-actions">
+              <button class="btn btn-primary btn-sm" onclick="draftIt(${idea.id})">Draft It →</button>
+              <button class="btn btn-sm btn-ghost" onclick="openEditModal(${idea.id})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteIdea(${idea.id})">Delete</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // Quick capture
+    async function addIdea() {
+      const title = document.getElementById('ideaInput').value.trim();
+      if (!title) { document.getElementById('ideaInput').focus(); return; }
+      const client_id = document.getElementById('captureClient').value || null;
+      const content_pillar = document.getElementById('capturePillar').value.trim() || null;
+      const idea = await apiFetch('/api/ideas', { method: 'POST', body: { title, client_id, content_pillar } });
+      allIdeas.unshift(idea);
+      document.getElementById('ideaInput').value = '';
+      document.getElementById('capturePillar').value = '';
+      document.getElementById('ideaInput').focus();
+      render();
+    }
+
+    document.getElementById('addIdeaBtn').addEventListener('click', addIdea);
+    document.getElementById('ideaInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addIdea(); }
+    });
+
+    // Status change
+    async function setStatus(id, status) {
+      const updated = await apiFetch(`/api/ideas/${id}`, { method: 'PUT', body: { status } });
+      const idx = allIdeas.findIndex(i => i.id === id);
+      if (idx !== -1) allIdeas[idx] = updated;
+      render();
+    }
+
+    // Draft It
+    async function draftIt(id) {
+      const idea = allIdeas.find(i => i.id === id);
+      if (!idea) return;
+      // Mark as in_progress if it's still just an idea
+      if (idea.status === 'idea') {
+        const updated = await apiFetch(`/api/ideas/${id}`, { method: 'PUT', body: { status: 'in_progress' } });
+        const idx = allIdeas.findIndex(i => i.id === id);
+        if (idx !== -1) allIdeas[idx] = updated;
+      }
+      // Store idea context for post-new.html to pick up
+      sessionStorage.setItem('draftIdea', JSON.stringify({
+        id: idea.id,
+        title: idea.title,
+        notes: idea.notes || '',
+        client_id: idea.client_id || '',
+      }));
+      window.location.href = `post-new.html${idea.client_id ? `?client=${idea.client_id}` : ''}`;
+    }
+
+    // Edit modal
+    function openEditModal(id) {
+      const idea = allIdeas.find(i => i.id === id);
+      if (!idea) return;
+      document.getElementById('editId').value = idea.id;
+      document.getElementById('editTitle').value = idea.title;
+      document.getElementById('editNotes').value = idea.notes || '';
+      document.getElementById('editClient').value = idea.client_id || '';
+      document.getElementById('editPillar').value = idea.content_pillar || '';
+      document.getElementById('editSource').value = idea.source || '';
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editId').value;
+      const body = {
+        title: document.getElementById('editTitle').value,
+        notes: document.getElementById('editNotes').value || null,
+        client_id: document.getElementById('editClient').value || null,
+        content_pillar: document.getElementById('editPillar').value || null,
+        source: document.getElementById('editSource').value || null,
+      };
+      const updated = await apiFetch(`/api/ideas/${id}`, { method: 'PUT', body });
+      const idx = allIdeas.findIndex(i => i.id === parseInt(id));
+      if (idx !== -1) allIdeas[idx] = updated;
+      closeEditModal();
+      render();
+    });
+
+    async function deleteIdea(id) {
+      if (!confirm('Delete this idea?')) return;
+      await apiFetch(`/api/ideas/${id}`, { method: 'DELETE' });
+      allIdeas = allIdeas.filter(i => i.id !== id);
+      render();
+    }
+
+    init();
+  </script>
+</body>
+</html>
