@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar — The Now Ghost</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .cal-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .cal-header h1 { font-size: 24px; font-weight: 700; flex: 1; }
+    .cal-nav { display: flex; align-items: center; gap: 12px; }
+    .cal-nav button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+    .cal-nav button:hover { background: #0a66c2; color: #fff; border-color: #0a66c2; }
+    .cal-month-label { font-size: 18px; font-weight: 700; min-width: 160px; text-align: center; }
+    #clientFilter { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: #fff; cursor: pointer; }
+
+    /* Calendar grid */
+    .cal-grid { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+    .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
+    .cal-weekday { padding: 10px 8px; text-align: center; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; }
+    .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); }
+    .cal-day { min-height: 96px; border-right: 1px solid #f3f4f6; border-bottom: 1px solid #f3f4f6; padding: 8px 6px; position: relative; }
+    .cal-day:nth-child(7n) { border-right: none; }
+    .cal-day.other-month { background: #fafafa; }
+    .cal-day.today { background: #eff6ff; }
+    .cal-day-num { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+    .cal-day.today .cal-day-num { background: #0a66c2; color: #fff; }
+    .cal-day.other-month .cal-day-num { color: #d1d5db; }
+    .cal-post-badge { display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 500; margin-bottom: 2px; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 100%; transition: opacity .15s; }
+    .cal-post-badge:hover { opacity: .8; }
+    .cal-post-badge.status-draft { background: #f3f4f6; color: #374151; }
+    .cal-post-badge.status-pending { background: #fef9c3; color: #854d0e; }
+    .cal-post-badge.status-approved { background: #dcfce7; color: #15803d; }
+    .cal-post-badge.status-rejected { background: #fee2e2; color: #991b1b; }
+    .cal-post-badge.status-scheduled { background: #e0e7ff; color: #3730a3; }
+    .cal-post-badge.status-posted { background: #dbeafe; color: #1d4ed8; }
+    .cal-overflow { font-size: 11px; color: #9ca3af; margin-top: 2px; cursor: pointer; }
+    .cal-overflow:hover { color: #0a66c2; }
+
+    /* Legend */
+    .cal-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; font-size: 12px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; color: #6b7280; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    /* Day detail popover */
+    .day-detail { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 24px; }
+    .day-detail-card { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 420px; max-height: 80vh; overflow-y: auto; }
+    .day-detail-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .day-post-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+    .day-post-item .client { font-size: 12px; font-weight: 600; color: #0a66c2; margin-bottom: 4px; }
+    .day-post-item .preview { font-size: 13px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+    .day-detail-close { float: right; background: none; border: none; font-size: 20px; cursor: pointer; color: #9ca3af; line-height: 1; margin-top: -4px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand"><span class="nav-brand-icon">👻</span> The Now Ghost</div>
+    <div class="nav-links">
+      <a href="index.html">Posts</a>
+      <a href="clients.html">Clients</a>
+      <a href="calendar.html" class="active">Calendar</a>
+      <a href="analytics.html">Analytics</a>
+      <a href="intel.html">Intel</a>
+      <a href="prompts.html">Prompts</a>
+      <a href="post-new.html" class="btn btn-primary btn-sm">+ New Post</a>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="cal-header">
+      <h1>Content Calendar</h1>
+      <select id="clientFilter"><option value="">All clients</option></select>
+      <div class="cal-nav">
+        <button id="prevMonth">‹</button>
+        <div class="cal-month-label" id="monthLabel"></div>
+        <button id="nextMonth">›</button>
+      </div>
+    </div>
+
+    <div class="cal-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#d1d5db"></div> Draft</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> Pending</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div> Approved</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#a5b4fc"></div> Scheduled</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div> Rejected</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div> Posted</div>
+    </div>
+
+    <div class="cal-grid">
+      <div class="cal-weekdays">
+        <div class="cal-weekday">Mon</div>
+        <div class="cal-weekday">Tue</div>
+        <div class="cal-weekday">Wed</div>
+        <div class="cal-weekday">Thu</div>
+        <div class="cal-weekday">Fri</div>
+        <div class="cal-weekday">Sat</div>
+        <div class="cal-weekday">Sun</div>
+      </div>
+      <div class="cal-days" id="calDays"></div>
+    </div>
+  </main>
+
+  <!-- Day detail overlay -->
+  <div id="dayDetail" class="day-detail" style="display:none">
+    <div class="day-detail-card">
+      <button class="day-detail-close" onclick="closeDayDetail()">×</button>
+      <h3 id="dayDetailTitle"></h3>
+      <div id="dayDetailPosts"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth();
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    });
+
+    let allPosts = [];
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth(); // 0-indexed
+
+    async function init() {
+      const [posts, clients] = await Promise.all([
+        apiFetch('/api/posts'),
+        apiFetch('/api/clients'),
+      ]);
+      allPosts = posts;
+
+      const sel = document.getElementById('clientFilter');
+      for (const c of clients) {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      }
+      sel.addEventListener('change', renderCalendar);
+      renderCalendar();
+    }
+
+    document.getElementById('prevMonth').addEventListener('click', () => {
+      currentMonth--;
+      if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+      renderCalendar();
+    });
+    document.getElementById('nextMonth').addEventListener('click', () => {
+      currentMonth++;
+      if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+      renderCalendar();
+    });
+
+    function postDate(p) {
+      // Use scheduled_at for scheduled posts, otherwise updated_at
+      if (p.status === 'scheduled' && p.scheduled_at) return new Date(p.scheduled_at);
+      return new Date(p.updated_at);
+    }
+
+    function renderCalendar() {
+      const clientId = document.getElementById('clientFilter').value;
+      const filtered = clientId ? allPosts.filter(p => String(p.client_id) === clientId) : allPosts;
+
+      const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      document.getElementById('monthLabel').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
+
+      // Build a map: 'YYYY-MM-DD' → [posts]
+      const postsByDay = {};
+      for (const p of filtered) {
+        const d = postDate(p);
+        if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+          const key = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+          if (!postsByDay[key]) postsByDay[key] = [];
+          postsByDay[key].push(p);
+        }
+      }
+
+      // First day of month (0=Sun…6=Sat), convert to Mon-start (0=Mon…6=Sun)
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const monStart = (firstDay + 6) % 7; // shift so Mon=0
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      const today = new Date();
+
+      const container = document.getElementById('calDays');
+      container.innerHTML = '';
+
+      // Leading blanks from previous month
+      const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
+      for (let i = monStart - 1; i >= 0; i--) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-day other-month';
+        cell.innerHTML = `<div class="cal-day-num">${prevMonthDays - i}</div>`;
+        container.appendChild(cell);
+      }
+
+      // Current month days
+      for (let d = 1; d <= daysInMonth; d++) {
+        const key = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isToday = today.getFullYear() === currentYear && today.getMonth() === currentMonth && today.getDate() === d;
+        const dayPosts = postsByDay[key] || [];
+
+        const cell = document.createElement('div');
+        cell.className = `cal-day${isToday ? ' today' : ''}`;
+        const MAX_VISIBLE = 3;
+        const visible = dayPosts.slice(0, MAX_VISIBLE);
+        const overflow = dayPosts.length - MAX_VISIBLE;
+
+        cell.innerHTML = `
+          <div class="cal-day-num">${d}</div>
+          ${visible.map(p => `
+            <div class="cal-post-badge status-${p.status}" onclick="event.stopPropagation();goPost(${p.id})" title="${escHtml(p.content.slice(0,80))}">
+              <span style="overflow:hidden;text-overflow:ellipsis">${escHtml(p.client_name.split(' ')[0])}: ${escHtml(p.content.slice(0,30))}…</span>
+            </div>`).join('')}
+          ${overflow > 0 ? `<div class="cal-overflow" onclick="showDay('${key}', ${d})">+${overflow} more</div>` : ''}
+        `;
+
+        if (dayPosts.length > 0) {
+          cell.style.cursor = 'pointer';
+          cell.addEventListener('click', () => showDay(key, d, dayPosts));
+        }
+        container.appendChild(cell);
+      }
+
+      // Trailing blanks
+      const totalCells = monStart + daysInMonth;
+      const trailing = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+      for (let i = 1; i <= trailing; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-day other-month';
+        cell.innerHTML = `<div class="cal-day-num">${i}</div>`;
+        container.appendChild(cell);
+      }
+    }
+
+    function showDay(key, dayNum, posts) {
+      const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      document.getElementById('dayDetailTitle').textContent = `${MONTHS[currentMonth]} ${dayNum}, ${currentYear}`;
+      const clientId = document.getElementById('clientFilter').value;
+      const filtered = clientId ? allPosts.filter(p => String(p.client_id) === clientId) : allPosts;
+
+      const dayPosts = posts || filtered.filter(p => {
+        const d = postDate(p);
+        return d.getFullYear() === currentYear && d.getMonth() === currentMonth && d.getDate() === dayNum;
+      });
+
+      document.getElementById('dayDetailPosts').innerHTML = dayPosts.map(p => `
+        <div class="day-post-item">
+          <div class="client">${escHtml(p.client_name)}</div>
+          <div class="preview">${escHtml(p.content)}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span class="status-badge status-${p.status}">${p.status}</span>
+            <a href="post-detail.html?id=${p.id}" class="btn btn-sm btn-ghost" style="font-size:12px">View →</a>
+          </div>
+        </div>`).join('');
+      document.getElementById('dayDetail').style.display = 'flex';
+    }
+
+    function closeDayDetail() {
+      document.getElementById('dayDetail').style.display = 'none';
+    }
+    document.getElementById('dayDetail').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeDayDetail();
+    });
+
+    function goPost(id) { window.location.href = `post-detail.html?id=${id}`; }
+
+    init();
+  </script>
+</body>
+</html>

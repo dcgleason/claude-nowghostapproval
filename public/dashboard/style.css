@@ -56,6 +56,8 @@ hr { border: none; border-top: 1px solid #e5e7eb; margin: 20px 0; }
 .status-approved { background: #dcfce7; color: #15803d; }
 .status-rejected { background: #fee2e2; color: #991b1b; }
 .status-posted { background: #dbeafe; color: #1d4ed8; }
+.status-scheduled { background: #e0e7ff; color: #3730a3; }
+.seg-scheduled { background: #a5b4fc; }
 
 /* Filter tabs */
 .filter-tabs { display: flex; gap: 4px; background: #f3f4f6; padding: 4px; border-radius: 8px; }

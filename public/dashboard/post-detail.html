@@ -12,8 +12,10 @@
     <div class="nav-links">
       <a href="index.html">Posts</a>
       <a href="clients.html">Clients</a>
+      <a href="calendar.html">Calendar</a>
       <a href="analytics.html">Analytics</a>
       <a href="intel.html">Intel</a>
+      <a href="prompts.html">Prompts</a>
       <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
     </div>
   </nav>
@@ -48,14 +50,21 @@
       document.getElementById('headerActions').innerHTML = `
         ${['draft', 'rejected'].includes(post.status) ? `<a href="post-new.html?edit=${post.id}" class="btn btn-secondary btn-sm">Edit</a>` : ''}
         ${['draft', 'rejected'].includes(post.status) ? `<button class="btn btn-primary btn-sm" onclick="sendApproval()">Send for Approval</button>` : ''}
-        ${post.status === 'approved' ? `<button class="btn btn-success" onclick="publish()">Post to LinkedIn ↗</button>` : ''}
+        ${post.status === 'approved' ? `
+          <button class="btn btn-secondary btn-sm" onclick="toggleScheduler()">🕐 Schedule</button>
+          <button class="btn btn-success" onclick="publish()">Post to LinkedIn ↗</button>` : ''}
+        ${post.status === 'scheduled' ? `
+          <button class="btn btn-secondary btn-sm" onclick="unschedule()">Unschedule</button>
+          <button class="btn btn-success" onclick="publish()">Post Now ↗</button>` : ''}
       `;
 
       document.getElementById('postDetail').innerHTML = `
         <div class="card">
           <div class="detail-meta">
             <div><strong>Client:</strong> ${escHtml(post.client_name)} <span class="muted">(${escHtml(post.client_email)})</span></div>
-            <div><strong>Status:</strong> <span class="status-badge status-${post.status}">${post.status}</span></div>
+            <div><strong>Status:</strong> <span class="status-badge status-${post.status}">${post.status}</span>
+              ${post.status === 'scheduled' && post.scheduled_at ? `<span style="font-size:13px;color:#6b7280;margin-left:8px">📅 Scheduled for ${new Date(post.scheduled_at).toLocaleString()}</span>` : ''}
+            </div>
             ${post.linkedin_person_urn ? `<div><strong>LinkedIn:</strong> <span class="connected">Connected</span>${daysLeft !== null && daysLeft < 7 ? ` <span class="warning">⚠️ Token expires in ${daysLeft}d</span>` : ''}</div>` : `<div><strong>LinkedIn:</strong> <a href="/linkedin/connect?client_id=${post.client_id}" class="btn btn-sm btn-secondary">Connect LinkedIn</a></div>`}
             ${post.linkedin_post_id ? `<div><strong>LinkedIn Post ID:</strong> <code>${escHtml(post.linkedin_post_id)}</code></div>` : ''}
           </div>
@@ -71,6 +80,38 @@
           </div>` : ''}
         </div>
       `;
+    }
+
+    // Inline scheduler picker
+    function toggleScheduler() {
+      let el = document.getElementById('schedulerBox');
+      if (el) { el.remove(); return; }
+      el = document.createElement('div');
+      el.id = 'schedulerBox';
+      el.style.cssText = 'margin-top:16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap';
+      // Default to tomorrow 9am
+      const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(9,0,0,0);
+      const fmt = d => d.toISOString().slice(0,16); // YYYY-MM-DDTHH:mm
+      el.innerHTML = `
+        <label style="font-size:14px;font-weight:500;color:#374151">Schedule for:</label>
+        <input type="datetime-local" id="scheduleInput" value="${fmt(tomorrow)}" min="${fmt(new Date())}" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+        <button class="btn btn-primary btn-sm" onclick="schedulePost()">Confirm</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('schedulerBox').remove()">Cancel</button>
+      `;
+      document.getElementById('postDetail').prepend(el);
+    }
+
+    async function schedulePost() {
+      const val = document.getElementById('scheduleInput')?.value;
+      if (!val) return;
+      await apiFetch(`/api/posts/${postId}/schedule`, { method: 'POST', body: { scheduled_at: new Date(val).toISOString() } });
+      load();
+    }
+
+    async function unschedule() {
+      if (!confirm('Remove the scheduled time? Post will return to Approved.')) return;
+      await apiFetch(`/api/posts/${postId}/schedule`, { method: 'DELETE' });
+      load();
     }
 
     async function sendApproval() {

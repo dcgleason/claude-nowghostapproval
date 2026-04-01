@@ -11,8 +11,8 @@ router.use(requireAuth);
 router.get('/', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT id, name, email, linkedin_person_urn,
-              linkedin_token_expires_at, created_at
+      `SELECT id, name, email, linkedin_person_urn, linkedin_token_expires_at,
+              voice_tone, content_pillars, topics_to_avoid, notes, created_at
        FROM clients ORDER BY created_at DESC`
     );
     res.json(rows);
@@ -26,8 +26,8 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT id, name, email, linkedin_person_urn,
-              linkedin_token_expires_at, created_at
+      `SELECT id, name, email, linkedin_person_urn, linkedin_token_expires_at,
+              voice_tone, content_pillars, topics_to_avoid, notes, created_at
        FROM clients WHERE id = $1`,
       [req.params.id]
     );
@@ -57,12 +57,20 @@ router.post('/', async (req, res) => {
 
 // PUT /clients/:id
 router.put('/:id', async (req, res) => {
-  const { name, email } = req.body;
+  const { name, email, voice_tone, content_pillars, topics_to_avoid, notes } = req.body;
   try {
     const { rows } = await pool.query(
-      `UPDATE clients SET name = COALESCE($1, name), email = COALESCE($2, email)
-       WHERE id = $3 RETURNING id, name, email`,
-      [name, email, req.params.id]
+      `UPDATE clients
+       SET name = COALESCE($1, name),
+           email = COALESCE($2, email),
+           voice_tone = COALESCE($3, voice_tone),
+           content_pillars = COALESCE($4, content_pillars),
+           topics_to_avoid = COALESCE($5, topics_to_avoid),
+           notes = COALESCE($6, notes)
+       WHERE id = $7
+       RETURNING id, name, email, voice_tone, content_pillars, topics_to_avoid, notes`,
+      [name || null, email || null, voice_tone ?? null, content_pillars ?? null,
+       topics_to_avoid ?? null, notes ?? null, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);

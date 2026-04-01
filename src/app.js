@@ -6,17 +6,35 @@ const pool = require('./db');
 
 const app = express();
 
-// Auto-migrate: create linkedin_auth_invitations if it doesn't exist
-pool.query(`
-  CREATE TABLE IF NOT EXISTS linkedin_auth_invitations (
+// Auto-migrations
+const migrations = [
+  `CREATE TABLE IF NOT EXISTS linkedin_auth_invitations (
     id SERIAL PRIMARY KEY,
     client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
     token TEXT UNIQUE NOT NULL,
     used_at TIMESTAMPTZ,
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
-  )
-`).catch((err) => console.error('Migration error (linkedin_auth_invitations):', err));
+  )`,
+  `ALTER TABLE posts ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMPTZ`,
+  `ALTER TABLE clients ADD COLUMN IF NOT EXISTS voice_tone TEXT`,
+  `ALTER TABLE clients ADD COLUMN IF NOT EXISTS content_pillars TEXT`,
+  `ALTER TABLE clients ADD COLUMN IF NOT EXISTS topics_to_avoid TEXT`,
+  `ALTER TABLE clients ADD COLUMN IF NOT EXISTS notes TEXT`,
+  `CREATE TABLE IF NOT EXISTS prompts (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'general',
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`,
+];
+(async () => {
+  for (const sql of migrations) {
+    await pool.query(sql).catch((err) => console.error('Migration error:', err.message));
+  }
+})();
 
 app.use(express.json());
 app.use(cookieParser());
@@ -33,6 +51,7 @@ app.use('/api/posts', require('./routes/posts'));
 app.use('/api/approvals', require('./routes/approvals'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/adlibrary', require('./routes/adlibrary'));
+app.use('/api/prompts', require('./routes/prompts'));
 app.use('/linkedin', require('./routes/linkedin'));
 app.use('/linkedin-auth', require('./routes/linkedinAuthPages'));
 
@@ -49,6 +68,7 @@ if (require.main === module) {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`LinkedIn Approval Tool running on http://localhost:${PORT}`);
+    require('./services/scheduler').start();
   });
 }
 

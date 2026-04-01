@@ -12,8 +12,10 @@
     <div class="nav-links">
       <a href="index.html">Posts</a>
       <a href="clients.html" class="active">Clients</a>
+      <a href="calendar.html">Calendar</a>
       <a href="analytics.html">Analytics</a>
       <a href="intel.html">Intel</a>
+      <a href="prompts.html">Prompts</a>
       <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
     </div>
   </nav>
@@ -32,7 +34,7 @@
 
   <!-- Add/Edit Modal -->
   <div id="modal" class="modal-overlay" style="display:none">
-    <div class="modal">
+    <div class="modal" style="max-width:520px">
       <h2 id="modalTitle">Add Client</h2>
       <form id="clientForm">
         <input type="hidden" id="editClientId">
@@ -43,6 +45,32 @@
         <div class="form-group">
           <label for="clientEmail">Email</label>
           <input type="email" id="clientEmail" required placeholder="jane@example.com">
+        </div>
+        <hr style="margin:20px 0 16px">
+        <p style="font-size:13px;font-weight:600;color:#374151;margin-bottom:14px;text-transform:uppercase;letter-spacing:.04em">Voice Profile</p>
+        <div class="form-group">
+          <label for="clientVoiceTone">Tone / Style</label>
+          <select id="clientVoiceTone">
+            <option value="">— Not set —</option>
+            <option value="Professional &amp; Authoritative">Professional &amp; Authoritative</option>
+            <option value="Conversational &amp; Approachable">Conversational &amp; Approachable</option>
+            <option value="Executive / C-Suite">Executive / C-Suite</option>
+            <option value="Technical Expert">Technical Expert</option>
+            <option value="Thought Leader">Thought Leader</option>
+            <option value="Sales-Focused">Sales-Focused</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="clientPillars">Content Pillars <span style="font-weight:400;color:#9ca3af">(comma-separated topics)</span></label>
+          <input type="text" id="clientPillars" placeholder="e.g. ServiceNow GRC, ITSM, digital transformation">
+        </div>
+        <div class="form-group">
+          <label for="clientAvoid">Topics to Avoid</label>
+          <input type="text" id="clientAvoid" placeholder="e.g. competitor names, pricing, politics">
+        </div>
+        <div class="form-group">
+          <label for="clientNotes">Notes</label>
+          <textarea id="clientNotes" rows="3" placeholder="Anything else — client preferences, examples they liked, context…"></textarea>
         </div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -74,8 +102,10 @@
       window.location.href = '/login.html';
     });
 
+    let allClients = [];
     async function loadClients() {
       const clients = await apiFetch('/api/clients');
+      allClients = clients;
       const list = document.getElementById('clientsList');
       if (!clients.length) {
         list.innerHTML = '<div class="empty-state"><p>No clients yet.</p></div>';
@@ -90,6 +120,8 @@
             <div class="client-info">
               <div class="client-name">${escHtml(c.name)}</div>
               <div class="client-email">${escHtml(c.email)}</div>
+              ${c.voice_tone ? `<div style="font-size:12px;color:#6b7280;margin-top:3px">🎙 ${escHtml(c.voice_tone)}</div>` : ''}
+              ${c.content_pillars ? `<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:4px">${c.content_pillars.split(',').map(p => `<span style="background:#eff6ff;color:#1d4ed8;font-size:11px;padding:2px 7px;border-radius:999px">${escHtml(p.trim())}</span>`).join('')}</div>` : ''}
             </div>
             <div class="client-linkedin">
               ${connected
@@ -101,7 +133,7 @@
               }
             </div>
             <div class="client-actions">
-              <button class="btn btn-sm btn-ghost" onclick="editClient(${c.id}, '${escHtml(c.name)}', '${escHtml(c.email)}')">Edit</button>
+              <button class="btn btn-sm btn-ghost" onclick="editClient(${c.id})">Edit</button>
               <button class="btn btn-sm btn-danger" onclick="deleteClient(${c.id})">Delete</button>
             </div>
           </div>
@@ -109,19 +141,30 @@
       }).join('');
     }
 
+    function clearModal() {
+      ['editClientId','clientName','clientEmail','clientPillars','clientAvoid','clientNotes'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('clientVoiceTone').value = '';
+    }
+
     function showAddModal() {
       document.getElementById('modalTitle').textContent = 'Add Client';
-      document.getElementById('editClientId').value = '';
-      document.getElementById('clientName').value = '';
-      document.getElementById('clientEmail').value = '';
+      clearModal();
       document.getElementById('modal').style.display = 'flex';
     }
 
-    function editClient(id, name, email) {
+    function editClient(id) {
+      const c = allClients.find(x => x.id === id);
+      if (!c) return;
       document.getElementById('modalTitle').textContent = 'Edit Client';
-      document.getElementById('editClientId').value = id;
-      document.getElementById('clientName').value = name;
-      document.getElementById('clientEmail').value = email;
+      document.getElementById('editClientId').value = c.id;
+      document.getElementById('clientName').value = c.name;
+      document.getElementById('clientEmail').value = c.email;
+      document.getElementById('clientVoiceTone').value = c.voice_tone || '';
+      document.getElementById('clientPillars').value = c.content_pillars || '';
+      document.getElementById('clientAvoid').value = c.topics_to_avoid || '';
+      document.getElementById('clientNotes').value = c.notes || '';
       document.getElementById('modal').style.display = 'flex';
     }
 
@@ -135,6 +178,10 @@
       const body = {
         name: document.getElementById('clientName').value,
         email: document.getElementById('clientEmail').value,
+        voice_tone: document.getElementById('clientVoiceTone').value || null,
+        content_pillars: document.getElementById('clientPillars').value || null,
+        topics_to_avoid: document.getElementById('clientAvoid').value || null,
+        notes: document.getElementById('clientNotes').value || null,
       };
       if (id) {
         await apiFetch(`/api/clients/${id}`, { method: 'PUT', body });

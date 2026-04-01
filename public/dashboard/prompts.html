@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompts — The Now Ghost</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .prompts-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .prompts-header h1 { font-size: 24px; font-weight: 700; flex: 1; }
+
+    /* Category tabs */
+    .cat-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 24px; }
+    .cat-tab { padding: 6px 14px; border-radius: 999px; border: 1px solid #e5e7eb; background: #fff; font-size: 13px; color: #6b7280; cursor: pointer; transition: all .15s; }
+    .cat-tab.active, .cat-tab:hover { background: #0a66c2; color: #fff; border-color: #0a66c2; }
+
+    /* Prompts grid */
+    .prompts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+    .prompt-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; }
+    .prompt-card-header { display: flex; align-items: flex-start; gap: 10px; }
+    .prompt-title { font-size: 15px; font-weight: 700; color: #111; flex: 1; }
+    .prompt-cat-badge { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; }
+    .cat-cold-outreach { background: #fef9c3; color: #854d0e; }
+    .cat-follow-up { background: #ede9fe; color: #5b21b6; }
+    .cat-post-draft { background: #dcfce7; color: #15803d; }
+    .cat-research { background: #dbeafe; color: #1d4ed8; }
+    .cat-response { background: #fce7f3; color: #9d174d; }
+    .cat-general { background: #f3f4f6; color: #374151; }
+    .prompt-content { font-size: 13px; color: #374151; line-height: 1.7; white-space: pre-wrap; background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 8px; padding: 12px 14px; flex: 1; }
+    .prompt-content.collapsed { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+    .prompt-expand { font-size: 12px; color: #0a66c2; background: none; border: none; cursor: pointer; padding: 0; text-align: left; }
+    .prompt-footer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .prompt-date { font-size: 12px; color: #9ca3af; flex: 1; }
+    .copy-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; font-size: 12px; font-weight: 500; cursor: pointer; color: #374151; transition: all .15s; }
+    .copy-btn:hover { background: #0a66c2; color: #fff; border-color: #0a66c2; }
+    .copy-btn.copied { background: #16a34a; color: #fff; border-color: #16a34a; }
+
+    /* Modal */
+    .char-count-row { display: flex; justify-content: flex-end; }
+    .char-counter { font-size: 12px; color: #9ca3af; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand"><span class="nav-brand-icon">👻</span> The Now Ghost</div>
+    <div class="nav-links">
+      <a href="index.html">Posts</a>
+      <a href="clients.html">Clients</a>
+      <a href="calendar.html">Calendar</a>
+      <a href="analytics.html">Analytics</a>
+      <a href="intel.html">Intel</a>
+      <a href="prompts.html" class="active">Prompts</a>
+      <a href="post-new.html" class="btn btn-primary btn-sm">+ New Post</a>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="prompts-header">
+      <h1>Prompt Library</h1>
+      <button class="btn btn-primary" onclick="openModal()">+ Add Prompt</button>
+    </div>
+
+    <div class="cat-tabs" id="catTabs">
+      <button class="cat-tab active" data-cat="all">All</button>
+      <button class="cat-tab" data-cat="cold-outreach">Cold Outreach</button>
+      <button class="cat-tab" data-cat="follow-up">Follow-up</button>
+      <button class="cat-tab" data-cat="post-draft">Post Draft</button>
+      <button class="cat-tab" data-cat="research">Research</button>
+      <button class="cat-tab" data-cat="response">Response</button>
+      <button class="cat-tab" data-cat="general">General</button>
+    </div>
+
+    <div id="statusMsg" class="status-msg" style="display:none"></div>
+    <div id="promptsList"></div>
+  </main>
+
+  <!-- Add/Edit Modal -->
+  <div id="modal" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:560px">
+      <h2 id="modalTitle">Add Prompt</h2>
+      <form id="promptForm">
+        <input type="hidden" id="editPromptId">
+        <div class="form-group">
+          <label for="promptTitle">Title</label>
+          <input type="text" id="promptTitle" required placeholder="e.g. ServiceNow Partner Cold Outreach">
+        </div>
+        <div class="form-group">
+          <label for="promptCat">Category</label>
+          <select id="promptCat">
+            <option value="cold-outreach">Cold Outreach</option>
+            <option value="follow-up">Follow-up</option>
+            <option value="post-draft">Post Draft</option>
+            <option value="research">Research</option>
+            <option value="response">Response</option>
+            <option value="general">General</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="promptContent">Prompt</label>
+          <textarea id="promptContent" rows="10" required placeholder="Write your full prompt here. Use [BRACKETS] for variables you fill in per use."></textarea>
+          <div class="char-count-row"><span class="char-counter" id="charCounter">0 characters</span></div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Prompt</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth();
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    });
+
+    let allPrompts = [];
+    let currentCat = 'all';
+
+    const LABELS = {
+      'cold-outreach': 'Cold Outreach',
+      'follow-up': 'Follow-up',
+      'post-draft': 'Post Draft',
+      'research': 'Research',
+      'response': 'Response',
+      'general': 'General',
+    };
+
+    async function loadPrompts() {
+      allPrompts = await apiFetch('/api/prompts');
+      renderPrompts();
+    }
+
+    document.getElementById('catTabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('[data-cat]');
+      if (!tab) return;
+      currentCat = tab.dataset.cat;
+      document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderPrompts();
+    });
+
+    function renderPrompts() {
+      const filtered = currentCat === 'all' ? allPrompts : allPrompts.filter(p => p.category === currentCat);
+      const list = document.getElementById('promptsList');
+
+      if (!filtered.length) {
+        list.innerHTML = `<div class="empty-state"><p>${currentCat === 'all' ? 'No prompts yet. Add your first one.' : 'No prompts in this category yet.'}</p></div>`;
+        return;
+      }
+
+      list.innerHTML = `<div class="prompts-grid">${filtered.map(p => renderCard(p)).join('')}</div>`;
+
+      // Copy buttons
+      list.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          navigator.clipboard.writeText(btn.dataset.text).then(() => {
+            btn.textContent = '✓ Copied';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = '⎘ Copy'; btn.classList.remove('copied'); }, 2000);
+          });
+        });
+      });
+
+      // Expand buttons
+      list.querySelectorAll('.prompt-expand').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const el = document.getElementById(btn.dataset.target);
+          el.classList.toggle('collapsed');
+          btn.textContent = el.classList.contains('collapsed') ? 'Show more' : 'Show less';
+        });
+      });
+    }
+
+    function renderCard(p) {
+      const isLong = p.content.length > 400;
+      const contentId = `pc-${p.id}`;
+      return `
+        <div class="prompt-card">
+          <div class="prompt-card-header">
+            <div class="prompt-title">${escHtml(p.title)}</div>
+            <span class="prompt-cat-badge cat-${p.category}">${LABELS[p.category] || p.category}</span>
+          </div>
+          <div class="prompt-content${isLong ? ' collapsed' : ''}" id="${contentId}">${escHtml(p.content)}</div>
+          ${isLong ? `<button class="prompt-expand" data-target="${contentId}">Show more</button>` : ''}
+          <div class="prompt-footer">
+            <span class="prompt-date">Updated ${formatDate(p.updated_at)}</span>
+            <button class="copy-btn" data-text="${escHtml(p.content).replace(/"/g,'&quot;')}">⎘ Copy</button>
+            <button class="btn btn-sm btn-ghost" onclick="editPrompt(${p.id})">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deletePrompt(${p.id})">Delete</button>
+          </div>
+        </div>`;
+    }
+
+    function openModal(id) {
+      document.getElementById('modalTitle').textContent = id ? 'Edit Prompt' : 'Add Prompt';
+      document.getElementById('editPromptId').value = id || '';
+      if (!id) {
+        document.getElementById('promptTitle').value = '';
+        document.getElementById('promptCat').value = 'cold-outreach';
+        document.getElementById('promptContent').value = '';
+        document.getElementById('charCounter').textContent = '0 characters';
+      }
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+    function editPrompt(id) {
+      const p = allPrompts.find(x => x.id === id);
+      if (!p) return;
+      openModal(id);
+      document.getElementById('promptTitle').value = p.title;
+      document.getElementById('promptCat').value = p.category;
+      document.getElementById('promptContent').value = p.content;
+      document.getElementById('charCounter').textContent = `${p.content.length} characters`;
+    }
+
+    async function deletePrompt(id) {
+      if (!confirm('Delete this prompt?')) return;
+      await apiFetch(`/api/prompts/${id}`, { method: 'DELETE' });
+      loadPrompts();
+    }
+
+    document.getElementById('promptContent').addEventListener('input', (e) => {
+      document.getElementById('charCounter').textContent = `${e.target.value.length} characters`;
+    });
+
+    document.getElementById('promptForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editPromptId').value;
+      const body = {
+        title: document.getElementById('promptTitle').value,
+        category: document.getElementById('promptCat').value,
+        content: document.getElementById('promptContent').value,
+      };
+      if (id) {
+        await apiFetch(`/api/prompts/${id}`, { method: 'PUT', body });
+      } else {
+        await apiFetch('/api/prompts', { method: 'POST', body });
+      }
+      closeModal();
+      loadPrompts();
+    });
+
+    loadPrompts();
+  </script>
+</body>
+</html>

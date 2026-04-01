@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT p.id, p.content, p.status, p.linkedin_post_id,
-              p.created_at, p.updated_at,
+              p.scheduled_at, p.created_at, p.updated_at,
               c.id AS client_id, c.name AS client_name, c.email AS client_email
        FROM posts p
        JOIN clients c ON c.id = p.client_id
@@ -92,6 +92,45 @@ router.delete('/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM posts WHERE id = $1', [req.params.id]);
     res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /posts/:id/schedule — schedule an approved post for a specific time
+router.post('/:id/schedule', async (req, res) => {
+  const { scheduled_at } = req.body;
+  if (!scheduled_at) return res.status(400).json({ error: 'scheduled_at is required' });
+  const scheduledDate = new Date(scheduled_at);
+  if (isNaN(scheduledDate.getTime())) return res.status(400).json({ error: 'Invalid date' });
+  if (scheduledDate < new Date()) return res.status(400).json({ error: 'Scheduled time must be in the future' });
+  try {
+    const { rows } = await pool.query(
+      `UPDATE posts SET status = 'scheduled', scheduled_at = $1
+       WHERE id = $2 AND status IN ('approved', 'scheduled')
+       RETURNING *`,
+      [scheduledDate, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Post not found or not in approved/scheduled state' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// DELETE /posts/:id/schedule — unschedule, revert to approved
+router.delete('/:id/schedule', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE posts SET status = 'approved', scheduled_at = NULL
+       WHERE id = $1 AND status = 'scheduled'
+       RETURNING *`,
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Post not found or not scheduled' });
+    res.json(rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
