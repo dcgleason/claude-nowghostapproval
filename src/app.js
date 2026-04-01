@@ -18,6 +18,7 @@ app.use('/auth', require('./routes/auth'));
 app.use('/api/clients', require('./routes/clients'));
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/approvals', require('./routes/approvals'));
+app.use('/api/analytics', require('./routes/analytics'));
 app.use('/linkedin', require('./routes/linkedin'));
 
 // Public approval page (token-based, no auth)

@@ -96,4 +96,25 @@ async function createPost(accessToken, personUrn, content) {
   return result;
 }
 
-module.exports = { exchangeCodeForToken, getPersonUrn, createPost };
+async function getPostEngagement(accessToken, postUrn) {
+  const encodedUrn = encodeURIComponent(postUrn);
+  const result = await httpsGet(
+    'api.linkedin.com',
+    `/v2/socialActions/${encodedUrn}`,
+    {
+      Authorization: `Bearer ${accessToken}`,
+      'X-Restli-Protocol-Version': '2.0.0',
+    }
+  );
+  if (result.status !== 200) {
+    return { error: result.status === 403 ? 'insufficient_scope' : `api_error_${result.status}` };
+  }
+  const b = result.body;
+  return {
+    reactions: b.likesSummary?.totalLikes ?? 0,
+    comments: b.commentsSummary?.totalFirstLevelComments ?? 0,
+    reposts: b.repostsSummary?.repostsCount ?? 0,
+  };
+}
+
+module.exports = { exchangeCodeForToken, getPersonUrn, createPost, getPostEngagement };

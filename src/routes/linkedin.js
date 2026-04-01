@@ -25,7 +25,7 @@ router.get('/connect', requireAuth, async (req, res) => {
     client_id: process.env.LINKEDIN_CLIENT_ID,
     redirect_uri: process.env.LINKEDIN_REDIRECT_URI,
     state,
-    scope: 'openid profile w_member_social',
+    scope: 'openid profile w_member_social r_member_social',
   });
 
   res.redirect(`https://www.linkedin.com/oauth/v2/authorization?${params}`);

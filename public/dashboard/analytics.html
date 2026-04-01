@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics — The Now Ghost</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .analytics-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+    .analytics-header h1 { font-size: 24px; font-weight: 700; flex: 1; }
+    .client-select-wrap { display: flex; align-items: center; gap: 10px; }
+    .client-select-wrap label { font-size: 14px; font-weight: 500; color: #374151; white-space: nowrap; }
+    #clientSelect { width: 220px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: #fff; cursor: pointer; }
+    #clientSelect:focus { border-color: #0a66c2; outline: none; box-shadow: 0 0 0 3px rgba(10,102,194,.1); }
+
+    /* Stat cards */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; }
+    .stat-card .stat-label { font-size: 12px; color: #6b7280; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
+    .stat-card .stat-value { font-size: 28px; font-weight: 800; color: #111; line-height: 1; }
+    .stat-card .stat-sub { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+    .stat-card.accent .stat-value { color: #0a66c2; }
+    .stat-card.green .stat-value { color: #16a34a; }
+
+    /* Section header */
+    .section-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .section-title .badge { font-size: 12px; font-weight: 500; background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 999px; }
+
+    /* Engagement totals */
+    .engagement-totals { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .eng-total-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 20px; display: flex; align-items: center; gap: 12px; flex: 1; min-width: 120px; }
+    .eng-total-icon { font-size: 22px; }
+    .eng-total-label { font-size: 12px; color: #6b7280; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; }
+    .eng-total-value { font-size: 22px; font-weight: 800; color: #111; line-height: 1; }
+
+    /* Engagement table */
+    .table-wrap { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead th { background: #f9fafb; padding: 10px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid #e5e7eb; }
+    tbody td { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; color: #374151; vertical-align: top; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #fafafa; }
+    .post-preview-cell { max-width: 340px; }
+    .post-preview-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; display: block; color: #111; }
+    .eng-num { font-weight: 700; color: #111; }
+    .eng-na { color: #d1d5db; font-size: 13px; }
+    .scope-warning { display: flex; align-items: center; gap: 6px; background: #fef9c3; color: #854d0e; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; }
+
+    /* Post status distribution */
+    .status-bar-wrap { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px 24px; margin-bottom: 28px; }
+    .status-bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; gap: 2px; margin: 12px 0; }
+    .status-bar-seg { border-radius: 999px; transition: flex .3s; }
+    .seg-draft { background: #d1d5db; }
+    .seg-pending { background: #fbbf24; }
+    .seg-approved { background: #34d399; }
+    .seg-rejected { background: #f87171; }
+    .seg-posted { background: #60a5fa; }
+    .status-bar-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: #6b7280; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+    .no-client { text-align: center; padding: 60px 20px; color: #9ca3af; font-size: 15px; }
+    .token-warning { font-size: 12px; color: #d97706; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand"><span class="nav-brand-icon">👻</span> The Now Ghost</div>
+    <div class="nav-links">
+      <a href="index.html">Posts</a>
+      <a href="clients.html">Clients</a>
+      <a href="analytics.html" class="active">Analytics</a>
+      <a href="post-new.html" class="btn btn-primary btn-sm">+ New Post</a>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="analytics-header">
+      <h1>Analytics</h1>
+      <div class="client-select-wrap">
+        <label for="clientSelect">Client:</label>
+        <select id="clientSelect">
+          <option value="">— Select a client —</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="analyticsContent">
+      <div class="no-client">Select a client to view their analytics.</div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth();
+    loadClients();
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    });
+
+    document.getElementById('clientSelect').addEventListener('change', (e) => {
+      const id = e.target.value;
+      if (id) loadAnalytics(id);
+      else document.getElementById('analyticsContent').innerHTML = '<div class="no-client">Select a client to view their analytics.</div>';
+    });
+
+    async function loadClients() {
+      const clients = await apiFetch('/api/clients');
+      const sel = document.getElementById('clientSelect');
+      for (const c of clients) {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      }
+      // Auto-select from query param if present
+      const params = new URLSearchParams(location.search);
+      const preselect = params.get('client_id');
+      if (preselect) {
+        sel.value = preselect;
+        if (sel.value) loadAnalytics(preselect);
+      }
+    }
+
+    async function loadAnalytics(clientId) {
+      const content = document.getElementById('analyticsContent');
+      content.innerHTML = '<div class="loading">Loading analytics…</div>';
+      const data = await apiFetch(`/api/analytics/${clientId}`);
+
+      const { client, stats, engagement, engagement_totals } = data;
+
+      const tokenExpired = client.linkedin_connected &&
+        new Date(client.linkedin_token_expires_at) < new Date();
+
+      // Detect if any engagement row has insufficient_scope error
+      const hasScopeError = engagement.some(e => e.error === 'insufficient_scope');
+
+      content.innerHTML = `
+        ${hasScopeError ? `
+          <div class="scope-warning">
+            ⚠️ LinkedIn engagement data requires reconnecting this client's account to grant read permissions.
+            <a href="clients.html" class="btn btn-sm btn-secondary" style="margin-left:auto">Reconnect</a>
+          </div>
+        ` : ''}
+        ${tokenExpired ? `
+          <div class="scope-warning">
+            ⚠️ ${escHtml(client.name)}'s LinkedIn token has expired — engagement data may be unavailable.
+            <a href="clients.html" class="btn btn-sm btn-secondary" style="margin-left:auto">Reconnect</a>
+          </div>
+        ` : ''}
+
+        <div class="stats-grid">
+          <div class="stat-card accent">
+            <div class="stat-label">Total Posts</div>
+            <div class="stat-value">${stats.total}</div>
+            <div class="stat-sub">all time</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Posted Live</div>
+            <div class="stat-value">${stats.posted}</div>
+            <div class="stat-sub">on LinkedIn</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">This Month</div>
+            <div class="stat-value">${stats.posts_this_month}</div>
+            <div class="stat-sub">posts written</div>
+          </div>
+          <div class="stat-card ${stats.approval_rate >= 80 ? 'green' : ''}">
+            <div class="stat-label">Approval Rate</div>
+            <div class="stat-value">${stats.approval_rate !== null ? stats.approval_rate + '%' : '—'}</div>
+            <div class="stat-sub">${stats.approved} approved · ${stats.rejected} rejected</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg Turnaround</div>
+            <div class="stat-value">${stats.avg_turnaround_hours !== null ? stats.avg_turnaround_hours + 'h' : '—'}</div>
+            <div class="stat-sub">approval response time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">In Pipeline</div>
+            <div class="stat-value">${stats.draft + stats.pending}</div>
+            <div class="stat-sub">${stats.draft} draft · ${stats.pending} pending</div>
+          </div>
+        </div>
+
+        ${stats.total > 0 ? `
+          <div class="status-bar-wrap">
+            <div class="section-title">Post Status Distribution</div>
+            <div class="status-bar">
+              ${stats.draft > 0 ? `<div class="status-bar-seg seg-draft" style="flex:${stats.draft}" title="Draft: ${stats.draft}"></div>` : ''}
+              ${stats.pending > 0 ? `<div class="status-bar-seg seg-pending" style="flex:${stats.pending}" title="Pending: ${stats.pending}"></div>` : ''}
+              ${stats.approved > 0 ? `<div class="status-bar-seg seg-approved" style="flex:${stats.approved}" title="Approved: ${stats.approved}"></div>` : ''}
+              ${stats.rejected > 0 ? `<div class="status-bar-seg seg-rejected" style="flex:${stats.rejected}" title="Rejected: ${stats.rejected}"></div>` : ''}
+              ${stats.posted > 0 ? `<div class="status-bar-seg seg-posted" style="flex:${stats.posted}" title="Posted: ${stats.posted}"></div>` : ''}
+            </div>
+            <div class="status-bar-legend">
+              <span><span class="legend-dot" style="background:#d1d5db"></span>Draft (${stats.draft})</span>
+              <span><span class="legend-dot" style="background:#fbbf24"></span>Pending (${stats.pending})</span>
+              <span><span class="legend-dot" style="background:#34d399"></span>Approved (${stats.approved})</span>
+              <span><span class="legend-dot" style="background:#f87171"></span>Rejected (${stats.rejected})</span>
+              <span><span class="legend-dot" style="background:#60a5fa"></span>Posted (${stats.posted})</span>
+            </div>
+          </div>
+        ` : ''}
+
+        ${engagement.length > 0 ? `
+          <div class="section-title">
+            LinkedIn Post Engagement
+            <span class="badge">${engagement.length} post${engagement.length !== 1 ? 's' : ''}</span>
+          </div>
+
+          <div class="engagement-totals">
+            <div class="eng-total-card">
+              <div class="eng-total-icon">👍</div>
+              <div>
+                <div class="eng-total-label">Total Reactions</div>
+                <div class="eng-total-value">${engagement_totals.reactions}</div>
+              </div>
+            </div>
+            <div class="eng-total-card">
+              <div class="eng-total-icon">💬</div>
+              <div>
+                <div class="eng-total-label">Total Comments</div>
+                <div class="eng-total-value">${engagement_totals.comments}</div>
+              </div>
+            </div>
+            <div class="eng-total-card">
+              <div class="eng-total-icon">🔁</div>
+              <div>
+                <div class="eng-total-label">Total Reposts</div>
+                <div class="eng-total-value">${engagement_totals.reposts}</div>
+              </div>
+            </div>
+            <div class="eng-total-card">
+              <div class="eng-total-icon">⚡</div>
+              <div>
+                <div class="eng-total-label">Total Engagement</div>
+                <div class="eng-total-value">${engagement_totals.reactions + engagement_totals.comments + engagement_totals.reposts}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Post</th>
+                  <th>Posted</th>
+                  <th>👍 Reactions</th>
+                  <th>💬 Comments</th>
+                  <th>🔁 Reposts</th>
+                  <th>⚡ Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${engagement.map(e => {
+                  const total = e.error ? null : (e.reactions + e.comments + e.reposts);
+                  const noData = e.error || e.reactions === null;
+                  return `
+                    <tr>
+                      <td class="post-preview-cell">
+                        <span class="post-preview-text">${escHtml(e.content)}</span>
+                        <a href="post-detail.html?id=${e.post_id}" class="back-link" style="font-size:12px;display:block;margin-top:3px">View post →</a>
+                      </td>
+                      <td style="white-space:nowrap;color:#9ca3af;font-size:13px">${formatDate(e.posted_at)}</td>
+                      <td>${noData ? '<span class="eng-na">—</span>' : `<span class="eng-num">${e.reactions}</span>`}</td>
+                      <td>${noData ? '<span class="eng-na">—</span>' : `<span class="eng-num">${e.comments}</span>`}</td>
+                      <td>${noData ? '<span class="eng-na">—</span>' : `<span class="eng-num">${e.reposts}</span>`}</td>
+                      <td>${noData ? '<span class="eng-na">—</span>' : `<span class="eng-num" style="color:#0a66c2">${total}</span>`}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+          <p style="font-size:12px;color:#9ca3af;margin-top:10px">
+            Showing most recent ${engagement.length} published post${engagement.length !== 1 ? 's' : ''}.
+            Impressions require LinkedIn Marketing Partner access — <a href="https://shieldapp.ai" target="_blank" style="color:#0a66c2">SHIELD App</a> is a good option for deeper analytics.
+          </p>
+        ` : stats.posted === 0 ? `
+          <div class="card" style="text-align:center;color:#9ca3af;padding:40px">
+            No posts have been published to LinkedIn yet for this client.
+          </div>
+        ` : `
+          <div class="card" style="text-align:center;color:#9ca3af;padding:40px">
+            ${!client.linkedin_connected ? 'LinkedIn account not connected — connect it on the Clients page to see engagement.' : 'No LinkedIn post IDs found. Posts published before this feature was added may not have IDs stored.'}
+          </div>
+        `}
+      `;
+    }
+  </script>
+</body>
+</html>
