@@ -98,6 +98,42 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// PUT /posts/:id/performance — save pattern tags + performance data
+router.put('/:id/performance', async (req, res) => {
+  const {
+    tag_format, tag_hook, tag_cta,
+    virality_rating, conversion_signal, impressions, performance_notes, is_winner,
+  } = req.body;
+  try {
+    const sets = [];
+    const vals = [];
+    let n = 1;
+    const add = (col, val) => { sets.push(`${col} = $${n++}`); vals.push(val); };
+    if (tag_format !== undefined)        add('tag_format', tag_format || null);
+    if (tag_hook !== undefined)          add('tag_hook', tag_hook || null);
+    if (tag_cta !== undefined)           add('tag_cta', tag_cta || null);
+    if (virality_rating !== undefined)   add('virality_rating', virality_rating || null);
+    if (conversion_signal !== undefined) add('conversion_signal', conversion_signal || null);
+    if (impressions !== undefined)       add('impressions', impressions || null);
+    if (performance_notes !== undefined) add('performance_notes', performance_notes || null);
+    if (is_winner !== undefined)         add('is_winner', !!is_winner);
+    if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
+    // Mark logged_at if any performance field is being set
+    const perfFields = [virality_rating, conversion_signal, impressions, performance_notes];
+    if (perfFields.some(v => v !== undefined)) sets.push(`performance_logged_at = NOW()`);
+    vals.push(req.params.id);
+    const { rows } = await pool.query(
+      `UPDATE posts SET ${sets.join(', ')} WHERE id = $${n} RETURNING *`,
+      vals
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // POST /posts/:id/schedule — schedule an approved post for a specific time
 router.post('/:id/schedule', async (req, res) => {
   const { scheduled_at } = req.body;

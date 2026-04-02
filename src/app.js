@@ -37,6 +37,15 @@ const migrations = [
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(client_id, section)
   )`,
+  `ALTER TABLE posts ADD COLUMN IF NOT EXISTS tag_format TEXT`,
+  `ALTER TABLE posts ADD COLUMN IF NOT EXISTS tag_hook TEXT`,
+  `ALTER TABLE posts ADD COLUMN IF NOT EXISTS tag_cta TEXT`,
+  `ALTER TABLE posts ADD COLUMN IF NOT EXISTS virality_rating INTEGER`,
+  `ALTER TABLE posts ADD COLUMN IF NOT EXISTS conversion_signal TEXT`,
+  `ALTER TABLE posts ADD COLUMN IF NOT EXISTS impressions INTEGER`,
+  `ALTER TABLE posts ADD COLUMN IF NOT EXISTS performance_notes TEXT`,
+  `ALTER TABLE posts ADD COLUMN IF NOT EXISTS performance_logged_at TIMESTAMPTZ`,
+  `ALTER TABLE posts ADD COLUMN IF NOT EXISTS is_winner BOOLEAN DEFAULT FALSE`,
   `CREATE TABLE IF NOT EXISTS ideas (
     id SERIAL PRIMARY KEY,
     client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
@@ -81,6 +90,7 @@ app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/adlibrary', require('./routes/adlibrary'));
 app.use('/api/prompts', require('./routes/prompts'));
 app.use('/api/ideas', require('./routes/ideas'));
+app.use('/api/learnings', require('./routes/learnings'));
 app.use('/linkedin', require('./routes/linkedin'));
 app.use('/linkedin-auth', require('./routes/linkedinAuthPages'));
 

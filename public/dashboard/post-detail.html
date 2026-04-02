@@ -5,6 +5,155 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Post Detail — The Now Ghost</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Performance panel ───────────────────────────── */
+    .perf-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-top: 20px;
+    }
+    .perf-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .perf-card-title { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 2px; }
+    .perf-card-subtitle { font-size: 12px; color: #9ca3af; }
+
+    /* Chip groups (format / hook / CTA) */
+    .tag-group { margin-bottom: 16px; }
+    .tag-group-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #9ca3af;
+      margin-bottom: 8px;
+    }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      font-size: 12px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all .12s;
+    }
+    .chip:hover { border-color: #0a66c2; color: #0a66c2; background: #eff6ff; }
+    .chip.active { background: #0a66c2; color: #fff; border-color: #0a66c2; }
+
+    /* Divider */
+    .perf-divider { border: none; border-top: 1px solid #f3f4f6; margin: 20px 0; }
+
+    /* Performance log fields */
+    .perf-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #9ca3af;
+      margin-bottom: 16px;
+    }
+    .perf-field { margin-bottom: 16px; }
+    .perf-field-label { font-size: 13px; font-weight: 600; color: #374151; display: block; margin-bottom: 6px; }
+    .perf-field-hint { font-size: 12px; color: #9ca3af; margin-left: 10px; }
+
+    /* Star rating */
+    .star-rating { display: flex; gap: 2px; }
+    .star {
+      font-size: 26px;
+      color: #e5e7eb;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0 1px;
+      line-height: 1;
+      transition: color .1s, transform .08s;
+    }
+    .star:hover { transform: scale(1.15); }
+    .star.lit { color: #f59e0b; }
+    .star.hover-lit { color: #fbbf24; }
+    .star-hint { font-size: 12px; color: #9ca3af; margin-left: 10px; align-self: center; }
+
+    .perf-select, .perf-input {
+      padding: 9px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      background: #f9fafb;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .15s;
+      width: auto;
+    }
+    .perf-select:focus, .perf-input:focus { border-color: #0a66c2; background: #fff; }
+    .perf-notes {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      line-height: 1.6;
+      background: #f9fafb;
+      resize: vertical;
+      outline: none;
+      transition: border-color .15s;
+      box-sizing: border-box;
+    }
+    .perf-notes:focus { border-color: #0a66c2; background: #fff; }
+
+    /* Conversion signal colors */
+    .signal-none { color: #9ca3af; }
+    .signal-dms { color: #6366f1; }
+    .signal-connections { color: #06b6d4; }
+    .signal-meeting { color: #f59e0b; }
+    .signal-lead { color: #16a34a; }
+    .signal-deal { color: #dc2626; font-weight: 700; }
+
+    .winner-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #374151;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .winner-toggle input { width: 16px; height: 16px; cursor: pointer; }
+
+    .perf-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .perf-save-indicator { font-size: 12px; }
+    .perf-save-indicator.saving { color: #6b7280; }
+    .perf-save-indicator.saved { color: #16a34a; }
+    .perf-save-indicator.error { color: #dc2626; }
+
+    .perf-locked-note {
+      font-size: 13px;
+      color: #9ca3af;
+      background: #f9fafb;
+      border: 1px dashed #e5e7eb;
+      border-radius: 8px;
+      padding: 14px 16px;
+      text-align: center;
+      margin-top: 4px;
+    }
+  </style>
 </head>
 <body>
   <nav class="navbar">
@@ -15,6 +164,7 @@
       <a href="clients.html">Clients</a>
       <a href="calendar.html">Calendar</a>
       <a href="analytics.html">Analytics</a>
+      <a href="learnings.html">Learnings</a>
       <a href="intel.html">Intel</a>
       <a href="prompts.html">Prompts</a>
       <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
@@ -28,6 +178,7 @@
     </div>
 
     <div id="postDetail" class="loading">Loading…</div>
+    <div id="performancePanel"></div>
   </main>
 
   <script src="app.js"></script>
@@ -64,9 +215,11 @@
           <div class="detail-meta">
             <div><strong>Client:</strong> ${escHtml(post.client_name)} <span class="muted">(${escHtml(post.client_email)})</span></div>
             <div><strong>Status:</strong> <span class="status-badge status-${post.status}">${post.status}</span>
-              ${post.status === 'scheduled' && post.scheduled_at ? `<span style="font-size:13px;color:#6b7280;margin-left:8px">📅 Scheduled for ${new Date(post.scheduled_at).toLocaleString()}</span>` : ''}
+              ${post.status === 'scheduled' && post.scheduled_at ? `<span style="font-size:13px;color:#6b7280;margin-left:8px">📅 ${new Date(post.scheduled_at).toLocaleString()}</span>` : ''}
             </div>
-            ${post.linkedin_person_urn ? `<div><strong>LinkedIn:</strong> <span class="connected">Connected</span>${daysLeft !== null && daysLeft < 7 ? ` <span class="warning">⚠️ Token expires in ${daysLeft}d</span>` : ''}</div>` : `<div><strong>LinkedIn:</strong> <a href="/linkedin/connect?client_id=${post.client_id}" class="btn btn-sm btn-secondary">Connect LinkedIn</a></div>`}
+            ${post.linkedin_person_urn
+              ? `<div><strong>LinkedIn:</strong> <span class="connected">Connected</span>${daysLeft !== null && daysLeft < 7 ? ` <span class="warning">⚠️ Token expires in ${daysLeft}d</span>` : ''}</div>`
+              : `<div><strong>LinkedIn:</strong> <a href="/linkedin/connect?client_id=${post.client_id}" class="btn btn-sm btn-secondary">Connect LinkedIn</a></div>`}
             ${post.linkedin_post_id ? `<div><strong>LinkedIn Post ID:</strong> <code>${escHtml(post.linkedin_post_id)}</code></div>` : ''}
           </div>
           <hr>
@@ -81,18 +234,19 @@
           </div>` : ''}
         </div>
       `;
+
+      renderPerformancePanel(post);
     }
 
-    // Inline scheduler picker
+    // ── Scheduler ──────────────────────────────────────────────────────────────
     function toggleScheduler() {
       let el = document.getElementById('schedulerBox');
       if (el) { el.remove(); return; }
       el = document.createElement('div');
       el.id = 'schedulerBox';
       el.style.cssText = 'margin-top:16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap';
-      // Default to tomorrow 9am
       const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(9,0,0,0);
-      const fmt = d => d.toISOString().slice(0,16); // YYYY-MM-DDTHH:mm
+      const fmt = d => d.toISOString().slice(0,16);
       el.innerHTML = `
         <label style="font-size:14px;font-weight:500;color:#374151">Schedule for:</label>
         <input type="datetime-local" id="scheduleInput" value="${fmt(tomorrow)}" min="${fmt(new Date())}" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
@@ -127,6 +281,201 @@
       await apiFetch(`/api/posts/${postId}/publish`, { method: 'POST' });
       alert('Posted to LinkedIn! ✅');
       load();
+    }
+
+    // ── Performance & Tags panel ────────────────────────────────────────────────
+    const FORMATS = ['Personal Story','Listicle','Single Insight','Question','Data-led','Contrarian Take','Case Study','Behind-the-scenes'];
+    const HOOKS   = ['Bold Statement','Personal Story','Stat / Number','Vulnerability','Question','Unpopular Opinion','Achievement','After X Years…'];
+    const CTAS    = ['None','Comment Below','DM Me','Save This','Share With Someone','Follow For More'];
+
+    const SIGNAL_LABELS = {
+      dms: '💬 DMs received',
+      connections: '🤝 Connection requests',
+      meeting: '📅 Meeting booked',
+      lead: '🎯 Lead generated',
+      deal: '🏆 Deal closed',
+    };
+
+    function renderPerformancePanel(post) {
+      const isPosted = post.status === 'posted';
+
+      const chipGroup = (field, options, current) => `
+        <div class="chip-row" data-field="${field}">
+          ${options.map(v => `<button class="chip${current === v ? ' active' : ''}" data-val="${v}">${escHtml(v)}</button>`).join('')}
+        </div>`;
+
+      const starsHtml = [1,2,3,4,5].map(n =>
+        `<button class="star${(post.virality_rating || 0) >= n ? ' lit' : ''}" data-v="${n}">★</button>`
+      ).join('');
+
+      document.getElementById('performancePanel').innerHTML = `
+        <div class="perf-card" id="perfCardEl">
+          <div class="perf-card-header">
+            <div>
+              <div class="perf-card-title">Pattern Tags &amp; Performance</div>
+              <div class="perf-card-subtitle">Tags train your Learnings over time. Log performance after publishing.</div>
+            </div>
+            <a href="learnings.html" class="btn btn-ghost btn-sm">View Learnings →</a>
+          </div>
+
+          <!-- Tags (available for any post) -->
+          <div class="tag-group">
+            <div class="tag-group-label">Format</div>
+            ${chipGroup('tag_format', FORMATS, post.tag_format)}
+          </div>
+          <div class="tag-group">
+            <div class="tag-group-label">Hook Type</div>
+            ${chipGroup('tag_hook', HOOKS, post.tag_hook)}
+          </div>
+          <div class="tag-group">
+            <div class="tag-group-label">Call to Action</div>
+            ${chipGroup('tag_cta', CTAS, post.tag_cta)}
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:4px">
+            <span class="perf-save-indicator" id="tagSaveIndicator"></span>
+            <button class="btn btn-ghost btn-sm" onclick="saveTags()">Save Tags</button>
+          </div>
+
+          <hr class="perf-divider">
+
+          ${isPosted ? `
+          <!-- Performance log (posted only) -->
+          <div class="perf-section-label">Performance Log</div>
+
+          <div class="perf-field">
+            <span class="perf-field-label">Virality Rating <span class="perf-field-hint">How well did this spread?</span></span>
+            <div style="display:flex;align-items:center;gap:4px">
+              <div class="star-rating" id="starRating">${starsHtml}</div>
+              <span class="star-hint" id="starLabel">${post.virality_rating ? '★'.repeat(post.virality_rating) + ' ' + ['','Weak','Below avg','Average','Strong','Exceptional'][post.virality_rating] : 'Click to rate'}</span>
+            </div>
+          </div>
+
+          <div class="perf-field">
+            <span class="perf-field-label">Conversion Signal <span class="perf-field-hint">Did this generate business outcomes?</span></span>
+            <select id="conversionSignal" class="perf-select">
+              <option value="">None</option>
+              <option value="dms"         ${post.conversion_signal === 'dms'         ? 'selected' : ''}>💬 DMs received</option>
+              <option value="connections" ${post.conversion_signal === 'connections' ? 'selected' : ''}>🤝 Connection requests</option>
+              <option value="meeting"     ${post.conversion_signal === 'meeting'     ? 'selected' : ''}>📅 Meeting booked</option>
+              <option value="lead"        ${post.conversion_signal === 'lead'        ? 'selected' : ''}>🎯 Lead generated</option>
+              <option value="deal"        ${post.conversion_signal === 'deal'        ? 'selected' : ''}>🏆 Deal closed</option>
+            </select>
+          </div>
+
+          <div class="perf-field" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div>
+              <span class="perf-field-label">Impressions <span style="font-weight:400;color:#9ca3af">(optional, self-reported)</span></span>
+              <input type="number" id="impressions" class="perf-input" placeholder="e.g. 4200" value="${post.impressions || ''}">
+            </div>
+            <label class="winner-toggle" style="margin-top:24px">
+              <input type="checkbox" id="isWinner" ${post.is_winner ? 'checked' : ''}>
+              <span>⭐ Star as Winner</span>
+            </label>
+          </div>
+
+          <div class="perf-field">
+            <span class="perf-field-label">Notes</span>
+            <textarea id="perfNotes" class="perf-notes" rows="2" placeholder="e.g. Got 3 DMs from CISOs, one booked a discovery call…">${escHtml(post.performance_notes || '')}</textarea>
+          </div>
+
+          <div class="perf-actions">
+            <span class="perf-save-indicator" id="perfSaveIndicator">
+              ${post.performance_logged_at ? `Last logged ${formatDate(post.performance_logged_at)}` : ''}
+            </span>
+            <button class="btn btn-primary btn-sm" onclick="savePerformance()">Save Performance</button>
+          </div>
+          ` : `
+          <div class="perf-locked-note">
+            Performance logging is available after this post is published to LinkedIn.
+            Tags above are saved and will appear in Learnings once it's posted.
+          </div>
+          `}
+        </div>
+      `;
+
+      // Wire chip toggles
+      document.querySelectorAll('.chip-row').forEach(row => {
+        row.addEventListener('click', e => {
+          const chip = e.target.closest('.chip');
+          if (!chip) return;
+          const wasActive = chip.classList.contains('active');
+          row.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+          if (!wasActive) chip.classList.add('active');
+        });
+      });
+
+      // Wire star rating
+      if (isPosted) {
+        const stars = document.querySelectorAll('.star');
+        const label = document.getElementById('starLabel');
+        const LABELS = ['','Weak','Below avg','Average','Strong','Exceptional'];
+
+        stars.forEach(star => {
+          star.addEventListener('click', () => {
+            const v = parseInt(star.dataset.v);
+            const current = getStarRating();
+            const next = v === current ? 0 : v;
+            stars.forEach(s => s.classList.toggle('lit', parseInt(s.dataset.v) <= next));
+            label.textContent = next ? '★'.repeat(next) + ' ' + LABELS[next] : 'Click to rate';
+          });
+          star.addEventListener('mouseenter', () => {
+            const v = parseInt(star.dataset.v);
+            stars.forEach(s => s.classList.toggle('hover-lit', parseInt(s.dataset.v) <= v && !s.classList.contains('lit')));
+          });
+        });
+        document.getElementById('starRating').addEventListener('mouseleave', () => {
+          document.querySelectorAll('.star').forEach(s => s.classList.remove('hover-lit'));
+        });
+      }
+
+      // Scroll to panel if URL has #performance anchor
+      if (location.hash === '#performance') {
+        setTimeout(() => document.getElementById('perfCardEl')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+      }
+    }
+
+    function getStarRating() {
+      return document.querySelectorAll('.star.lit').length;
+    }
+
+    function getTagValues() {
+      const tags = {};
+      document.querySelectorAll('.chip-row').forEach(row => {
+        const active = row.querySelector('.chip.active');
+        tags[row.dataset.field] = active ? active.dataset.val : null;
+      });
+      return tags;
+    }
+
+    async function saveTags() {
+      const el = document.getElementById('tagSaveIndicator');
+      el.textContent = 'Saving…'; el.className = 'perf-save-indicator saving';
+      try {
+        await apiFetch(`/api/posts/${postId}/performance`, { method: 'PUT', body: getTagValues() });
+        el.textContent = 'Saved ✓'; el.className = 'perf-save-indicator saved';
+      } catch {
+        el.textContent = 'Failed'; el.className = 'perf-save-indicator error';
+      }
+    }
+
+    async function savePerformance() {
+      const el = document.getElementById('perfSaveIndicator');
+      el.textContent = 'Saving…'; el.className = 'perf-save-indicator saving';
+      const body = {
+        ...getTagValues(),
+        virality_rating: getStarRating() || null,
+        conversion_signal: document.getElementById('conversionSignal').value || null,
+        impressions: document.getElementById('impressions').value ? parseInt(document.getElementById('impressions').value) : null,
+        performance_notes: document.getElementById('perfNotes').value || null,
+        is_winner: document.getElementById('isWinner').checked,
+      };
+      try {
+        await apiFetch(`/api/posts/${postId}/performance`, { method: 'PUT', body });
+        el.textContent = 'Saved ✓'; el.className = 'perf-save-indicator saved';
+      } catch {
+        el.textContent = 'Failed'; el.className = 'perf-save-indicator error';
+      }
     }
 
     load();
