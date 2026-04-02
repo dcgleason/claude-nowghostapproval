@@ -119,11 +119,26 @@
     .learnings-empty .steps { display: flex; flex-direction: column; gap: 10px; max-width: 360px; margin: 0 auto; text-align: left; }
     .learnings-empty .step { display: flex; gap: 12px; align-items: flex-start; font-size: 13px; color: #374151; }
     .learnings-empty .step-num { width: 22px; height: 22px; border-radius: 50%; background: #0a66c2; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+
+    @media (max-width: 700px) {
+      .learnings-header h1 { font-size: 20px; }
+      .view-tabs { gap: 6px; }
+      .view-tab { padding: 9px 16px; font-size: 13px; flex: 1; text-align: center; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .stat-value { font-size: 22px; }
+      /* Bar labels: shrink on mobile */
+      .bar-label { min-width: 80px; max-width: 80px; font-size: 12px; }
+      .bar-count { width: 36px; font-size: 11px; }
+      .signal-grid { grid-template-columns: repeat(2, 1fr); }
+      .perf-posts-grid { grid-template-columns: 1fr; }
+      .learnings-empty { padding: 40px 20px; }
+    }
   </style>
 </head>
 <body>
   <nav class="navbar">
     <div class="nav-brand"><span class="nav-brand-icon">👻</span> The Now Ghost</div>
+    <button class="nav-hamburger" id="navHamburger" aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
     <div class="nav-links">
       <a href="index.html">Posts</a>
       <a href="ideas.html">Ideas</a>
@@ -436,6 +451,40 @@
     }
 
     init();
+  </script>
+  <!-- Mobile nav -->
+  <div class="nav-mobile-overlay" id="mobileOverlay"></div>
+  <div class="nav-mobile-menu" id="mobileMenu">
+    <div class="nav-mobile-header">
+      <div class="nav-mobile-brand"><span>👻</span> The Now Ghost</div>
+      <button class="nav-mobile-close" id="mobileClose">✕</button>
+    </div>
+    <div class="nav-mobile-links" id="mobileLinksCopy"></div>
+    <div class="nav-mobile-footer">
+      <a href="post-new.html" class="btn btn-primary">+ New Post</a>
+      <button id="mobileLogoutBtn" class="btn btn-secondary">Logout</button>
+    </div>
+  </div>
+  <script>
+    (function() {
+      var overlay = document.getElementById('mobileOverlay');
+      var menu = document.getElementById('mobileMenu');
+      var open = document.getElementById('navHamburger');
+      var close = document.getElementById('mobileClose');
+      var logoutBtns = [document.getElementById('logoutBtn'), document.getElementById('mobileLogoutBtn')];
+
+      // Clone desktop nav links (excluding buttons) into mobile menu
+      var desktopLinks = document.querySelectorAll('.nav-links a:not(.btn)');
+      var mobileLinksEl = document.getElementById('mobileLinksCopy');
+      desktopLinks.forEach(function(a) { mobileLinksEl.appendChild(a.cloneNode(true)); });
+
+      function openMenu() { menu.classList.add('open'); overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('open'); overlay.classList.remove('open'); document.body.style.overflow = ''; }
+      if (open) open.addEventListener('click', openMenu);
+      if (close) close.addEventListener('click', closeMenu);
+      overlay.addEventListener('click', closeMenu);
+      logoutBtns.forEach(function(b) { if (b) b.addEventListener('click', function() { fetch('/auth/logout',{method:'POST'}).then(function(){window.location.href='/login.html';}); }); });
+    })();
   </script>
 </body>
 </html>

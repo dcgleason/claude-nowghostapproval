@@ -5,10 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clients — The Now Ghost</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    @media (max-width: 700px) {
+      .modal { max-width: 100% !important; }
+      .client-linkedin { flex-wrap: wrap; gap: 6px; }
+    }
+  </style>
 </head>
 <body>
   <nav class="navbar">
     <div class="nav-brand"><span class="nav-brand-icon">👻</span> The Now Ghost</div>
+    <button class="nav-hamburger" id="navHamburger" aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
     <div class="nav-links">
       <a href="index.html">Posts</a>
       <a href="ideas.html">Ideas</a>
@@ -226,6 +233,40 @@
     }
 
     loadClients();
+  </script>
+  <!-- Mobile nav -->
+  <div class="nav-mobile-overlay" id="mobileOverlay"></div>
+  <div class="nav-mobile-menu" id="mobileMenu">
+    <div class="nav-mobile-header">
+      <div class="nav-mobile-brand"><span>👻</span> The Now Ghost</div>
+      <button class="nav-mobile-close" id="mobileClose">✕</button>
+    </div>
+    <div class="nav-mobile-links" id="mobileLinksCopy"></div>
+    <div class="nav-mobile-footer">
+      <a href="post-new.html" class="btn btn-primary">+ New Post</a>
+      <button id="mobileLogoutBtn" class="btn btn-secondary">Logout</button>
+    </div>
+  </div>
+  <script>
+    (function() {
+      var overlay = document.getElementById('mobileOverlay');
+      var menu = document.getElementById('mobileMenu');
+      var open = document.getElementById('navHamburger');
+      var close = document.getElementById('mobileClose');
+      var logoutBtns = [document.getElementById('logoutBtn'), document.getElementById('mobileLogoutBtn')];
+
+      // Clone desktop nav links (excluding buttons) into mobile menu
+      var desktopLinks = document.querySelectorAll('.nav-links a:not(.btn)');
+      var mobileLinksEl = document.getElementById('mobileLinksCopy');
+      desktopLinks.forEach(function(a) { mobileLinksEl.appendChild(a.cloneNode(true)); });
+
+      function openMenu() { menu.classList.add('open'); overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('open'); overlay.classList.remove('open'); document.body.style.overflow = ''; }
+      if (open) open.addEventListener('click', openMenu);
+      if (close) close.addEventListener('click', closeMenu);
+      overlay.addEventListener('click', closeMenu);
+      logoutBtns.forEach(function(b) { if (b) b.addEventListener('click', function() { fetch('/auth/logout',{method:'POST'}).then(function(){window.location.href='/login.html';}); }); });
+    })();
   </script>
 </body>
 </html>

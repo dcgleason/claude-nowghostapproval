@@ -60,11 +60,27 @@
 
     .no-client { text-align: center; padding: 60px 20px; color: #9ca3af; font-size: 15px; }
     .token-warning { font-size: 12px; color: #d97706; margin-top: 4px; }
+
+    @media (max-width: 700px) {
+      .analytics-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .analytics-header h1 { font-size: 20px; }
+      .client-select-wrap { width: 100%; }
+      #clientSelect { width: 100%; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-card .stat-value { font-size: 22px; }
+      .engagement-totals { gap: 8px; }
+      .eng-total-card { min-width: calc(50% - 4px); padding: 12px 14px; }
+      .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      table { min-width: 480px; }
+      .post-preview-cell { max-width: 180px; }
+      .post-preview-text { max-width: 160px; }
+    }
   </style>
 </head>
 <body>
   <nav class="navbar">
     <div class="nav-brand"><span class="nav-brand-icon">👻</span> The Now Ghost</div>
+    <button class="nav-hamburger" id="navHamburger" aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
     <div class="nav-links">
       <a href="index.html">Posts</a>
       <a href="ideas.html">Ideas</a>
@@ -294,6 +310,40 @@
         `}
       `;
     }
+  </script>
+  <!-- Mobile nav -->
+  <div class="nav-mobile-overlay" id="mobileOverlay"></div>
+  <div class="nav-mobile-menu" id="mobileMenu">
+    <div class="nav-mobile-header">
+      <div class="nav-mobile-brand"><span>👻</span> The Now Ghost</div>
+      <button class="nav-mobile-close" id="mobileClose">✕</button>
+    </div>
+    <div class="nav-mobile-links" id="mobileLinksCopy"></div>
+    <div class="nav-mobile-footer">
+      <a href="post-new.html" class="btn btn-primary">+ New Post</a>
+      <button id="mobileLogoutBtn" class="btn btn-secondary">Logout</button>
+    </div>
+  </div>
+  <script>
+    (function() {
+      var overlay = document.getElementById('mobileOverlay');
+      var menu = document.getElementById('mobileMenu');
+      var open = document.getElementById('navHamburger');
+      var close = document.getElementById('mobileClose');
+      var logoutBtns = [document.getElementById('logoutBtn'), document.getElementById('mobileLogoutBtn')];
+
+      // Clone desktop nav links (excluding buttons) into mobile menu
+      var desktopLinks = document.querySelectorAll('.nav-links a:not(.btn)');
+      var mobileLinksEl = document.getElementById('mobileLinksCopy');
+      desktopLinks.forEach(function(a) { mobileLinksEl.appendChild(a.cloneNode(true)); });
+
+      function openMenu() { menu.classList.add('open'); overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('open'); overlay.classList.remove('open'); document.body.style.overflow = ''; }
+      if (open) open.addEventListener('click', openMenu);
+      if (close) close.addEventListener('click', closeMenu);
+      overlay.addEventListener('click', closeMenu);
+      logoutBtns.forEach(function(b) { if (b) b.addEventListener('click', function() { fetch('/auth/logout',{method:'POST'}).then(function(){window.location.href='/login.html';}); }); });
+    })();
   </script>
 </body>
 </html>

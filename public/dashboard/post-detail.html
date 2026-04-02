@@ -153,11 +153,20 @@
       text-align: center;
       margin-top: 4px;
     }
+
+    @media (max-width: 700px) {
+      .perf-card { padding: 18px 16px; }
+      .perf-select, .perf-input { width: 100%; }
+      .perf-actions { flex-direction: column; align-items: stretch; }
+      .perf-actions .btn { width: 100%; justify-content: center; }
+      .star { font-size: 30px; } /* easier to tap */
+    }
   </style>
 </head>
 <body>
   <nav class="navbar">
     <div class="nav-brand"><span class="nav-brand-icon">👻</span> The Now Ghost</div>
+    <button class="nav-hamburger" id="navHamburger" aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
     <div class="nav-links">
       <a href="index.html">Posts</a>
       <a href="ideas.html">Ideas</a>
@@ -244,12 +253,12 @@
       if (el) { el.remove(); return; }
       el = document.createElement('div');
       el.id = 'schedulerBox';
-      el.style.cssText = 'margin-top:16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap';
+      el.style.cssText = 'margin-top:16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;width:100%';
       const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(9,0,0,0);
       const fmt = d => d.toISOString().slice(0,16);
       el.innerHTML = `
         <label style="font-size:14px;font-weight:500;color:#374151">Schedule for:</label>
-        <input type="datetime-local" id="scheduleInput" value="${fmt(tomorrow)}" min="${fmt(new Date())}" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+        <input type="datetime-local" id="scheduleInput" value="${fmt(tomorrow)}" min="${fmt(new Date())}" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;flex:1;min-width:0">
         <button class="btn btn-primary btn-sm" onclick="schedulePost()">Confirm</button>
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('schedulerBox').remove()">Cancel</button>
       `;
@@ -479,6 +488,40 @@
     }
 
     load();
+  </script>
+  <!-- Mobile nav -->
+  <div class="nav-mobile-overlay" id="mobileOverlay"></div>
+  <div class="nav-mobile-menu" id="mobileMenu">
+    <div class="nav-mobile-header">
+      <div class="nav-mobile-brand"><span>👻</span> The Now Ghost</div>
+      <button class="nav-mobile-close" id="mobileClose">✕</button>
+    </div>
+    <div class="nav-mobile-links" id="mobileLinksCopy"></div>
+    <div class="nav-mobile-footer">
+      <a href="post-new.html" class="btn btn-primary">+ New Post</a>
+      <button id="mobileLogoutBtn" class="btn btn-secondary">Logout</button>
+    </div>
+  </div>
+  <script>
+    (function() {
+      var overlay = document.getElementById('mobileOverlay');
+      var menu = document.getElementById('mobileMenu');
+      var open = document.getElementById('navHamburger');
+      var close = document.getElementById('mobileClose');
+      var logoutBtns = [document.getElementById('logoutBtn'), document.getElementById('mobileLogoutBtn')];
+
+      // Clone desktop nav links (excluding buttons) into mobile menu
+      var desktopLinks = document.querySelectorAll('.nav-links a:not(.btn)');
+      var mobileLinksEl = document.getElementById('mobileLinksCopy');
+      desktopLinks.forEach(function(a) { mobileLinksEl.appendChild(a.cloneNode(true)); });
+
+      function openMenu() { menu.classList.add('open'); overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('open'); overlay.classList.remove('open'); document.body.style.overflow = ''; }
+      if (open) open.addEventListener('click', openMenu);
+      if (close) close.addEventListener('click', closeMenu);
+      overlay.addEventListener('click', closeMenu);
+      logoutBtns.forEach(function(b) { if (b) b.addEventListener('click', function() { fetch('/auth/logout',{method:'POST'}).then(function(){window.location.href='/login.html';}); }); });
+    })();
   </script>
 </body>
 </html>
